@@ -3,6 +3,8 @@
 
   const RULES = __HEADERGUARD_RULES__;
   const COOKIE_REFERENCE = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie";
+  const OWASP_REFERENCE = "https://owasp.org/www-project-secure-headers/";
+  const THEME_KEY = "headerguard.lite.theme.v1";
   const SAFE_REFERRER_POLICIES = new Set([
     "no-referrer",
     "same-origin",
@@ -221,11 +223,182 @@
     return headers;
   }
 
+  function safeStorage(action, fallback = null) {
+    try {
+      return action();
+    } catch {
+      return fallback;
+    }
+  }
+
+  function makeElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  function makeReference(label, href) {
+    const link = makeElement("a", "reference-link", `${label} ↗`);
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    return link;
+  }
+
+  function renderCookies(cookieAnalysis) {
+    const panel = document.querySelector("#cookie-results");
+    const list = document.querySelector("#cookie-list");
+    list.replaceChildren();
+    if (!cookieAnalysis.count) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    document.querySelector("#cookie-summary").textContent = `${cookieAnalysis.secure} seguras · ${cookieAnalysis.warnings} a revisar · valores ocultos`;
+    for (const cookie of cookieAnalysis.cookies) {
+      const row = makeElement("article", `cookie-item ${cookie.status}`);
+      const head = makeElement("div", "cookie-head");
+      head.append(
+        makeElement("strong", "", cookie.name),
+        makeElement(
+          "span",
+          `cookie-status ${cookie.status}`,
+          cookie.status === "secure" ? "Correcta" : "Revisar",
+        ),
+      );
+      const attributes = makeElement("div", "cookie-attributes");
+      attributes.append(
+        makeElement("span", cookie.secure ? "active" : "", "Secure"),
+        makeElement("span", cookie.http_only ? "active" : "", "HttpOnly"),
+        makeElement("span", cookie.same_site ? "active" : "", `SameSite=${cookie.same_site || "—"}`),
+      );
+      row.append(head, attributes);
+      if (cookie.issues.length) row.append(makeElement("p", "cookie-issues", cookie.issues.join(" · ")));
+      list.append(row);
+    }
+    const guide = makeReference("Guía oficial de cookies", cookieAnalysis.reference);
+    guide.classList.add("cookie-reference");
+    list.append(guide);
+  }
+
+  function renderResults(report) {
+    const analysis = report.analysis;
+    document.querySelector("#score").textContent = analysis.score;
+    document.querySelector("#grade").textContent = analysis.grade;
+    document.querySelector("#summary").textContent = `${analysis.present} de ${analysis.total} presentes`;
+    document.querySelector("#secure-count").textContent = analysis.secure;
+    document.querySelector("#warning-count").textContent = analysis.warnings;
+    document.querySelector("#missing-count").textContent = analysis.missing;
+    document.querySelector("#score-ring").style.setProperty("--score-angle", `${analysis.score * 3.6}deg`);
+
+    const priorities = document.querySelector("#priority-list");
+    priorities.replaceChildren();
+    if (!analysis.priorities.length) {
+      priorities.append(makeElement("p", "priority-empty", "✓ No hay acciones urgentes en estas nueve comprobaciones."));
+    } else {
+      for (const priority of analysis.priorities) {
+        const card = makeElement("article", "priority-item");
+        card.append(
+          makeElement("strong", "", priority.name),
+          makeElement("p", "", priority.message),
+        );
+        priorities.append(card);
+      }
+    }
+
+    const icons = { secure: "✓", warning: "!", missing: "×" };
+    const headers = document.querySelector("#header-list");
+    headers.replaceChildren();
+    for (const item of analysis.results) {
+      const row = makeElement("article", `header-item ${item.status}`);
+      row.append(makeElement("span", "state-icon", icons[item.status]));
+      const identity = makeElement("div", "header-identity");
+      identity.append(
+        makeElement("div", "header-name", item.name),
+        makeElement("div", "header-value", item.present ? item.value : "No detectada"),
+      );
+      const detail = makeElement("div", "header-detail");
+      detail.append(makeElement("p", "", item.purpose));
+      const guidance = item.status === "secure"
+        ? `Configuración sólida · ${item.earned}/${item.weight} puntos.`
+        : item.status === "warning"
+          ? `${item.issue} · ${item.earned}/${item.weight} puntos.`
+          : `Recomendación: ${item.recommendation}`;
+      detail.append(makeElement("small", "", guidance));
+      const references = makeElement("div", "reference-links");
+      references.append(
+        makeReference("MDN", item.reference),
+        makeReference("OWASP", OWASP_REFERENCE),
+      );
+      detail.append(references);
+      row.append(identity, detail);
+      headers.append(row);
+    }
+    renderCookies(analysis.cookies);
+    const results = document.querySelector("#results");
+    results.classList.remove("hidden");
+    results.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyTheme(theme) {
+    const selected = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = selected;
+    document.querySelector(".theme-icon").textContent = selected === "dark" ? "☼" : "☾";
+    document.querySelector("#theme-toggle").setAttribute(
+      "aria-label",
+      selected === "dark" ? "Activar tema claro" : "Activar tema oscuro",
+    );
+    safeStorage(() => localStorage.setItem(THEME_KEY, selected));
+  }
+
+  function initializeInterface() {
+    const storedTheme = safeStorage(() => localStorage.getItem(THEME_KEY));
+    const preferredTheme = globalThis.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    applyTheme(storedTheme || preferredTheme);
+
+    document.querySelector("#theme-toggle").addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    });
+    document.querySelector("#sample-button").addEventListener("click", () => {
+      document.querySelector("#headers").value = [
+        "HTTP/2 200",
+        "content-security-policy: default-src 'self'; object-src 'none'",
+        "strict-transport-security: max-age=31536000; includeSubDomains",
+        "x-content-type-options: nosniff",
+        "x-frame-options: DENY",
+        "referrer-policy: strict-origin-when-cross-origin",
+        "set-cookie: __Host-session=demo-value; Secure; HttpOnly; SameSite=Lax; Path=/",
+      ].join("\n");
+      const status = document.querySelector("#status");
+      status.className = "status success";
+      status.textContent = "Ejemplo cargado. Pulsa Analizar ahora.";
+    });
+    document.querySelector("#analyze-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const status = document.querySelector("#status");
+      try {
+        const headers = parseRawHeaders(document.querySelector("#headers").value);
+        renderResults({ source: "pasted", analysis: analyzeHeaders(headers) });
+        status.className = "status success";
+        status.textContent = "Análisis completado en este dispositivo.";
+      } catch (error) {
+        status.className = "status";
+        status.textContent = error.message;
+      }
+    });
+  }
+
+  if (typeof document !== "undefined") initializeInterface();
+
   globalThis.HeaderGuardLite = Object.freeze({
     rules: RULES,
     parseRawHeaders,
     quality,
     analyzeCookies,
     analyzeHeaders,
+    renderResults,
+    renderCookies,
+    applyTheme,
   });
 })();

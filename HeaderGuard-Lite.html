@@ -3,45 +3,253 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-eR36i/YHeCZG1u9Bbn8WLz37vwHg/9PcO2yRDz4dFbQ='; style-src 'sha256-+zgRcenDG4NbeS1InucsdiR9UkwgRY1KtdvFmLHWPR8='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-uJm9RUC7LQF7hHmX70foahqxQIVZykuCECUyLXeb2vs='; style-src 'sha256-d/epuiL9SIcPVyDHCEA99ccSHGePX8Z2/Zpak9KOTqY='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark light">
-  <title>HeaderGuard Lite · abyssnx</title>
+  <meta name="description" content="Analiza cabeceras HTTP de seguridad localmente, sin instalar nada ni enviar datos.">
+  <title>HeaderGuard Lite · analizador local de cabeceras HTTP</title>
   <style>:root {
   color-scheme: dark;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  background: #07101f;
-  color: #edf6ff;
+  --bg: #07101f; --panel: rgba(13, 27, 48, .84); --panel-solid: #0e1c31;
+  --text: #f0f7ff; --muted: #91a4bf; --line: rgba(154, 181, 215, .16);
+  --cyan: #40e7d0; --blue: #5f83ff; --violet: #a86cff;
+  --green: #60e6ad; --amber: #ffc56b; --red: #ff718d;
+  --shadow: 0 26px 70px rgba(0, 0, 0, .28);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text);
 }
-
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f8ff; --panel: rgba(255, 255, 255, .9); --panel-solid: #fff;
+  --text: #10213a; --muted: #586c87; --line: rgba(35, 65, 105, .14);
+  --cyan: #008f89; --blue: #315bd9; --violet: #7640d8;
+  --green: #128761; --amber: #b66400; --red: #c6375b;
+  --shadow: 0 22px 60px rgba(31, 66, 112, .13);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  margin: 0;
+  min-width: 300px; margin: 0; overflow-x: hidden;
+  background: linear-gradient(rgba(93,131,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(93,131,255,.04) 1px, transparent 1px), var(--bg);
+  background-size: 44px 44px; color: var(--text); font-size: 15px; line-height: 1.6;
 }
-
-main {
-  width: min(72rem, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 4rem 0;
+button, textarea { font: inherit; }
+button { color: inherit; }
+a { color: inherit; }
+.hidden { display: none !important; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--cyan) 80%, white); outline-offset: 3px; }
+.ambient { position: fixed; z-index: -1; width: 34rem; height: 34rem; border-radius: 50%; filter: blur(110px); opacity: .13; pointer-events: none; }
+.ambient-one { top: -12rem; left: -10rem; background: var(--blue); }
+.ambient-two { top: 24rem; right: -16rem; background: var(--cyan); }
+.topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  width: min(1180px, calc(100% - 36px)); margin: 18px auto 0; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--bg) 76%, transparent);
+  box-shadow: 0 12px 35px rgba(0,0,0,.08); backdrop-filter: blur(18px);
 }
-
-.brand {
-  color: #43e6d2;
-  font-weight: 800;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+.logo { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; }
+.logo-mark { display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid color-mix(in srgb,var(--cyan) 55%,transparent); border-radius: 12px; background: linear-gradient(145deg,rgba(64,231,208,.18),rgba(95,131,255,.13)); color: var(--cyan); font-size: 12px; font-weight: 900; }
+.logo strong { display: block; font-size: 14px; }
+.logo small { display: block; color: var(--muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.top-actions { display: flex; align-items: center; gap: 8px; }
+.local-pill, .local-result { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.local-pill span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+.icon-button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); cursor: pointer; }
+.theme-icon { color: var(--amber); font-size: 19px; }
+main { width: min(1120px, calc(100% - 36px)); margin: 0 auto; }
+.hero { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(270px,.6fr); gap: 48px; align-items: end; padding: 100px 0 58px; }
+.eyebrow, .upgrade-kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.eyebrow span { width: 22px; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+h1, h2, h3, p { margin-top: 0; }
+h1 { max-width: 760px; margin-bottom: 20px; font-size: clamp(42px,6.4vw,76px); line-height: .98; letter-spacing: -.065em; }
+h1 em { display: block; color: transparent; font-style: normal; background: linear-gradient(90deg,var(--cyan),#79a6ff 55%,var(--violet)); background-clip: text; }
+.hero-lead { max-width: 660px; margin-bottom: 24px; color: var(--muted); font-size: 17px; }
+.trust-row { display: flex; flex-wrap: wrap; gap: 10px 20px; color: var(--muted); font-size: 12px; font-weight: 650; }
+.privacy-card { display: flex; gap: 14px; padding: 20px; border: 1px solid color-mix(in srgb,var(--cyan) 24%,var(--line)); border-radius: 20px; background: linear-gradient(135deg,rgba(64,231,208,.08),var(--panel)); box-shadow: var(--shadow); }
+.privacy-icon { display: grid; place-items: center; flex: 0 0 42px; height: 42px; border-radius: 13px; background: rgba(64,231,208,.13); color: var(--cyan); font-size: 25px; }
+.privacy-card strong { font-size: 14px; }
+.privacy-card p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.workspace { padding: 12px 0 50px; }
+.panel { border: 1px solid var(--line); border-radius: 24px; background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+.input-card { padding: 28px; }
+.panel-heading, .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.panel-heading > div, .section-heading > div { display: flex; align-items: center; gap: 11px; }
+.panel-heading h2, .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.025em; }
+.panel-heading > span, .limit { color: var(--muted); font-size: 11px; }
+.step { display: grid; place-items: center; width: 32px; height: 25px; border-radius: 8px; background: color-mix(in srgb,var(--blue) 16%,transparent); color: #8fa9ff; font: 800 10px/1 ui-monospace,monospace; }
+label { display: block; margin-bottom: 9px; color: var(--muted); font-size: 12px; font-weight: 700; }
+textarea { display: block; width: 100%; min-height: 240px; resize: vertical; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb,var(--bg) 70%,transparent); color: var(--text); font: 13px/1.75 "Cascadia Code",Consolas,monospace; caret-color: var(--cyan); transition: border-color .2s,box-shadow .2s; }
+textarea:focus { border-color: color-mix(in srgb,var(--cyan) 60%,transparent); box-shadow: 0 0 0 4px rgba(64,231,208,.08); }
+textarea::placeholder { color: color-mix(in srgb,var(--muted) 58%,transparent); }
+.form-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 16px; }
+.form-footer p { margin: 0; color: var(--muted); font-size: 11px; }
+.form-actions { display: flex; gap: 9px; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 42px; padding: 0 17px; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; transition: transform .18s,border-color .18s,filter .18s; }
+.button:hover { transform: translateY(-1px); }
+.button.ghost { background: transparent; color: var(--muted); }
+.button.primary { border-color: transparent; background: linear-gradient(120deg,#25cdbd,#516fe6); color: #05131f; box-shadow: 0 10px 28px rgba(48,202,191,.18); }
+.button.primary b { font-size: 17px; }
+.status { min-height: 22px; margin-top: 12px; color: var(--red); font-size: 12px; }
+.status.success { color: var(--green); }
+.results { padding-top: 54px; }
+.section-heading { margin-bottom: 18px; }
+.overview-grid { display: grid; grid-template-columns: .95fr 1.25fr; gap: 16px; }
+.score-card { display: flex; align-items: center; gap: 24px; padding: 24px; }
+.score-ring { --score-angle: 0deg; position: relative; display: grid; place-items: center; width: 124px; height: 124px; flex: 0 0 124px; border-radius: 50%; background: conic-gradient(var(--cyan) var(--score-angle),var(--line) 0); }
+.score-ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--panel-solid); }
+.score-ring div { position: relative; text-align: center; }
+.score-ring strong { font-size: 34px; line-height: 1; letter-spacing: -.05em; }
+.score-ring span { color: var(--muted); font-size: 11px; }
+.overline { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.score-copy h3 { margin: 5px 0 4px; font-size: 24px; }
+.score-copy h3 span { color: var(--cyan); }
+.score-copy p { margin: 0; color: var(--muted); font-size: 12px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.stat { position: relative; overflow: hidden; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+.stat::after { content: ""; position: absolute; right: -25px; bottom: -35px; width: 90px; height: 90px; border-radius: 50%; opacity: .09; background: currentColor; }
+.stat span, .stat small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+.stat strong { display: block; margin: 10px 0 3px; font-size: 36px; line-height: 1; }
+.stat.secure { color: var(--green); } .stat.warning { color: var(--amber); } .stat.missing { color: var(--red); }
+.stat small { color: var(--muted); font-size: 9px; letter-spacing: 0; text-transform: none; }
+.priority-card, .detail-card { margin-top: 16px; padding: 24px; }
+.panel-heading.compact { margin-bottom: 16px; }
+.priority-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 11px; }
+.priority-item { padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb,var(--bg) 50%,transparent); }
+.priority-item strong { display: block; margin-bottom: 5px; color: var(--amber); font: 750 12px/1.35 ui-monospace,monospace; overflow-wrap: anywhere; }
+.priority-item p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.priority-empty { grid-column: 1/-1; margin: 0; padding: 16px; color: var(--green); text-align: center; }
+.header-list, .cookie-list { display: grid; gap: 9px; }
+.header-item, .cookie-item { display: grid; grid-template-columns: 32px minmax(180px,.72fr) minmax(260px,1.28fr); gap: 14px; align-items: start; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb,var(--bg) 45%,transparent); }
+.state-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; font-weight: 900; }
+.header-item.secure .state-icon { background: rgba(96,230,173,.13); color: var(--green); }
+.header-item.warning .state-icon { background: rgba(255,197,107,.13); color: var(--amber); }
+.header-item.missing .state-icon { background: rgba(255,113,141,.12); color: var(--red); }
+.header-name { margin-bottom: 5px; font: 750 12px/1.4 ui-monospace,monospace; overflow-wrap: anywhere; }
+.header-value { max-height: 48px; overflow: auto; color: var(--muted); font: 10px/1.5 ui-monospace,monospace; overflow-wrap: anywhere; }
+.header-detail p { margin-bottom: 5px; color: var(--muted); font-size: 11px; }
+.header-detail small { color: var(--text); font-size: 10px; }
+.reference-links { display: flex; gap: 8px; margin-top: 8px; }
+.reference-link { color: var(--cyan); font-size: 10px; font-weight: 750; text-decoration: none; }
+.reference-link:hover { text-decoration: underline; }
+.cookie-item { grid-template-columns: 1fr auto; }
+.cookie-head { display: flex; align-items: center; gap: 10px; }
+.cookie-head strong { font: 750 12px ui-monospace,monospace; }
+.cookie-status { padding: 3px 7px; border-radius: 99px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.cookie-status.secure { background: rgba(96,230,173,.12); color: var(--green); }
+.cookie-status.warning { background: rgba(255,197,107,.12); color: var(--amber); }
+.cookie-attributes { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+.cookie-attributes span { padding: 4px 7px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font: 9px ui-monospace,monospace; }
+.cookie-attributes span.active { border-color: rgba(96,230,173,.25); color: var(--green); }
+.cookie-issues { grid-column: 1/-1; margin: 0; color: var(--amber); font-size: 10px; }
+.cookie-reference { justify-self: start; }
+.upgrade-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0 80px; padding: 28px; border: 1px solid color-mix(in srgb,var(--violet) 30%,var(--line)); border-radius: 24px; background: linear-gradient(120deg,rgba(168,108,255,.08),rgba(95,131,255,.09)); }
+.upgrade-kicker { margin-bottom: 8px; color: #c495ff; }
+.upgrade-card h2 { max-width: 690px; margin-bottom: 7px; font-size: 21px; line-height: 1.25; }
+.upgrade-card p { margin: 0; color: var(--muted); font-size: 12px; }
+.upgrade-label { flex: 0 0 auto; padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; color: #caa5ff; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+footer { display: flex; justify-content: space-between; gap: 20px; width: min(1120px,calc(100% - 36px)); margin: 0 auto; padding: 26px 0 38px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+footer p { margin: 0; } footer span { margin: 0 6px; color: var(--cyan); }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 26px; padding-top: 72px; } .privacy-card { max-width: 540px; } .overview-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .topbar, main, footer { width: min(100% - 24px,1120px); } .local-pill { display: none; }
+  .hero { padding: 58px 0 38px; } h1 { font-size: clamp(40px,14vw,58px); } .hero-lead { font-size: 15px; }
+  .input-card, .priority-card, .detail-card { padding: 18px; border-radius: 19px; }
+  .panel-heading > span, .section-heading > span { display: none; } textarea { min-height: 270px; }
+  .form-footer { align-items: stretch; flex-direction: column; } .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .score-ring { width: 106px; height: 106px; flex-basis: 106px; } .stat-grid { gap: 7px; } .stat { padding: 15px 10px; } .stat strong { font-size: 28px; }
+  .priority-list { grid-template-columns: 1fr; } .header-item { grid-template-columns: 30px 1fr; } .header-detail { grid-column: 2; }
+  .cookie-item { grid-template-columns: 1fr; } .cookie-attributes { justify-content: flex-start; }
+  .upgrade-card, footer { align-items: flex-start; flex-direction: column; } .upgrade-label { white-space: normal; }
 }
+@media (max-width: 420px) { .form-actions { grid-template-columns: 1fr; } .score-card { align-items: flex-start; flex-direction: column; } .stat span { letter-spacing: 0; text-transform: none; } .stat small { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+@media print { :root { color-scheme: light; --bg:#fff; --panel:#fff; --panel-solid:#fff; --text:#101828; --muted:#475467; --line:#d0d5dd; } .topbar,.hero,.input-card,.upgrade-card,footer { display:none; } body { background:#fff; } main { width:100%; } .results { padding:0; } .panel,.stat { box-shadow:none; break-inside:avoid; } }
 </style>
 </head>
 <body>
-  <main>
-    <p class="brand">HeaderGuard Lite</p>
-    <h1>Análisis local de cabeceras HTTP</h1>
-    <p>La edición sin instalación de HeaderGuard, creada por abyssnx.</p>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="logo" href="#main" aria-label="Ir al inicio de HeaderGuard Lite">
+      <span class="logo-mark" aria-hidden="true">HG</span>
+      <span><strong>HeaderGuard</strong><small>by abyssnx</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="local-pill"><span aria-hidden="true"></span> Sin conexión</span>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema"><span class="theme-icon" aria-hidden="true">☼</span></button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Edición Lite · análisis local</p>
+        <h1 id="hero-title">Convierte cabeceras HTTP en <em>acciones claras.</em></h1>
+        <p class="hero-lead">Pega la respuesta de un servidor y descubre qué protecciones existen, cuáles son débiles y cómo mejorarlas. Sin cuentas, sin servidor y sin enviar datos.</p>
+        <div class="trust-row" aria-label="Características de privacidad"><span>✓ 100 % local</span><span>✓ Valores de cookies ocultos</span><span>✓ Código abierto</span></div>
+      </div>
+      <aside class="privacy-card">
+        <div class="privacy-icon" aria-hidden="true">⌁</div>
+        <div><strong>Todo ocurre en este navegador</strong><p>El texto pegado permanece en memoria y nunca sale de tu equipo.</p></div>
+      </aside>
+    </section>
+    <section class="workspace" aria-label="Analizador de cabeceras">
+      <div class="input-card panel">
+        <div class="panel-heading"><div><span class="step">01</span><h2>Pega las cabeceras</h2></div><span class="limit">Máximo 32 KB</span></div>
+        <form id="analyze-form" novalidate>
+          <label for="headers">Respuesta HTTP o lista de cabeceras</label>
+          <textarea id="headers" name="headers" spellcheck="false" required placeholder="HTTP/2 200&#10;content-security-policy: default-src 'self'&#10;strict-transport-security: max-age=31536000"></textarea>
+          <div class="form-footer">
+            <p>Admite una línea de estado opcional y varias cabeceras Set-Cookie.</p>
+            <div class="form-actions">
+              <button id="sample-button" class="button ghost" type="button">Cargar ejemplo</button>
+              <button id="analyze-button" class="button primary" type="submit"><span>Analizar ahora</span><b aria-hidden="true">→</b></button>
+            </div>
+          </div>
+        </form>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+      <section id="results" class="results hidden" aria-live="polite" aria-labelledby="results-title">
+        <div class="section-heading"><div><span class="step">02</span><h2 id="results-title">Informe de seguridad</h2></div><span class="local-result">Analizado localmente</span></div>
+        <div class="overview-grid">
+          <article class="score-card panel">
+            <div id="score-ring" class="score-ring"><div><strong id="score">0</strong><span>/100</span></div></div>
+            <div class="score-copy"><span class="overline">Resultado global</span><h3>Nota <span id="grade">—</span></h3><p id="summary">Todavía no hay resultados.</p></div>
+          </article>
+          <div class="stat-grid">
+            <article class="stat secure"><span>Correctas</span><strong id="secure-count">0</strong><small>Configuración sólida</small></article>
+            <article class="stat warning"><span>Mejorables</span><strong id="warning-count">0</strong><small>Necesitan revisión</small></article>
+            <article class="stat missing"><span>Ausentes</span><strong id="missing-count">0</strong><small>Protecciones que faltan</small></article>
+          </div>
+        </div>
+        <section class="priority-card panel" aria-labelledby="priority-title">
+          <div class="panel-heading compact"><div><span class="step">03</span><h2 id="priority-title">Prioridades</h2></div><span>Empieza por estas mejoras</span></div>
+          <div id="priority-list" class="priority-list"></div>
+        </section>
+        <section class="detail-card panel" aria-labelledby="headers-title">
+          <div class="panel-heading compact"><div><span class="step">04</span><h2 id="headers-title">Cabeceras evaluadas</h2></div><span>Nueve controles esenciales</span></div>
+          <div id="header-list" class="header-list"></div>
+        </section>
+        <section id="cookie-results" class="detail-card panel hidden" aria-labelledby="cookies-title">
+          <div class="panel-heading compact"><div><span class="step">05</span><h2 id="cookies-title">Cookies detectadas</h2></div><span id="cookie-summary">Valores eliminados por privacidad</span></div>
+          <div id="cookie-list" class="cookie-list"></div>
+        </section>
+      </section>
+    </section>
+    <aside id="complete-edition" class="upgrade-card">
+      <div><span class="upgrade-kicker">¿Quieres analizar una web directamente?</span><h2>La edición completa añade escaneo por URL protegido frente a SSRF.</h2><p>Se instala con Python o Docker y conserva este mismo análisis manual.</p></div>
+      <span class="upgrade-label">HeaderGuard Completo → README</span>
+    </aside>
   </main>
+  <footer>
+    <p><strong>HeaderGuard Lite</strong> · Herramienta educativa, no sustituye una auditoría profesional.</p>
+    <p>Creado por <strong>abyssnx</strong> <span aria-hidden="true">◆</span> v1.3</p>
+  </footer>
   <script>(() => {
   "use strict";
 
   const RULES = [{"name":"strict-transport-security","purpose":"Obliga al navegador a usar HTTPS y reduce ataques de downgrade.","recommendation":"max-age=31536000; includeSubDomains (añade preload solo tras comprobar requisitos).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security","weight":20},{"name":"content-security-policy","purpose":"Limita los orígenes desde los que se puede cargar contenido y mitiga XSS.","recommendation":"Empieza con default-src 'self' y ajusta cada directiva a los recursos necesarios.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy","weight":25},{"name":"x-content-type-options","purpose":"Evita que el navegador adivine tipos MIME.","recommendation":"nosniff","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options","weight":10},{"name":"x-frame-options","purpose":"Reduce el riesgo de clickjacking en navegadores antiguos.","recommendation":"DENY o SAMEORIGIN; prioriza también frame-ancestors en CSP.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options","weight":10},{"name":"referrer-policy","purpose":"Controla cuánta información de navegación se envía a otros sitios.","recommendation":"strict-origin-when-cross-origin","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy","weight":10},{"name":"permissions-policy","purpose":"Restringe APIs sensibles del navegador, como cámara o geolocalización.","recommendation":"Desactiva lo que no uses, por ejemplo: camera=(), microphone=(), geolocation=().","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy","weight":10},{"name":"cross-origin-opener-policy","purpose":"Aísla el contexto de navegación frente a ventanas de otros orígenes.","recommendation":"same-origin (comprueba antes integraciones con ventanas externas).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy","weight":5},{"name":"cross-origin-resource-policy","purpose":"Limita qué otros orígenes pueden cargar los recursos de la respuesta.","recommendation":"same-origin o same-site según el caso de uso.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Resource-Policy","weight":5},{"name":"cross-origin-embedder-policy","purpose":"Exige recursos compatibles con aislamiento de origen cruzado.","recommendation":"require-corp solo si todos los recursos externos son compatibles.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy","weight":5}];
   const COOKIE_REFERENCE = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie";
+  const OWASP_REFERENCE = "https://owasp.org/www-project-secure-headers/";
+  const THEME_KEY = "headerguard.lite.theme.v1";
   const SAFE_REFERRER_POLICIES = new Set([
     "no-referrer",
     "same-origin",
@@ -260,12 +468,183 @@ main {
     return headers;
   }
 
+  function safeStorage(action, fallback = null) {
+    try {
+      return action();
+    } catch {
+      return fallback;
+    }
+  }
+
+  function makeElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  function makeReference(label, href) {
+    const link = makeElement("a", "reference-link", `${label} ↗`);
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    return link;
+  }
+
+  function renderCookies(cookieAnalysis) {
+    const panel = document.querySelector("#cookie-results");
+    const list = document.querySelector("#cookie-list");
+    list.replaceChildren();
+    if (!cookieAnalysis.count) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    document.querySelector("#cookie-summary").textContent = `${cookieAnalysis.secure} seguras · ${cookieAnalysis.warnings} a revisar · valores ocultos`;
+    for (const cookie of cookieAnalysis.cookies) {
+      const row = makeElement("article", `cookie-item ${cookie.status}`);
+      const head = makeElement("div", "cookie-head");
+      head.append(
+        makeElement("strong", "", cookie.name),
+        makeElement(
+          "span",
+          `cookie-status ${cookie.status}`,
+          cookie.status === "secure" ? "Correcta" : "Revisar",
+        ),
+      );
+      const attributes = makeElement("div", "cookie-attributes");
+      attributes.append(
+        makeElement("span", cookie.secure ? "active" : "", "Secure"),
+        makeElement("span", cookie.http_only ? "active" : "", "HttpOnly"),
+        makeElement("span", cookie.same_site ? "active" : "", `SameSite=${cookie.same_site || "—"}`),
+      );
+      row.append(head, attributes);
+      if (cookie.issues.length) row.append(makeElement("p", "cookie-issues", cookie.issues.join(" · ")));
+      list.append(row);
+    }
+    const guide = makeReference("Guía oficial de cookies", cookieAnalysis.reference);
+    guide.classList.add("cookie-reference");
+    list.append(guide);
+  }
+
+  function renderResults(report) {
+    const analysis = report.analysis;
+    document.querySelector("#score").textContent = analysis.score;
+    document.querySelector("#grade").textContent = analysis.grade;
+    document.querySelector("#summary").textContent = `${analysis.present} de ${analysis.total} presentes`;
+    document.querySelector("#secure-count").textContent = analysis.secure;
+    document.querySelector("#warning-count").textContent = analysis.warnings;
+    document.querySelector("#missing-count").textContent = analysis.missing;
+    document.querySelector("#score-ring").style.setProperty("--score-angle", `${analysis.score * 3.6}deg`);
+
+    const priorities = document.querySelector("#priority-list");
+    priorities.replaceChildren();
+    if (!analysis.priorities.length) {
+      priorities.append(makeElement("p", "priority-empty", "✓ No hay acciones urgentes en estas nueve comprobaciones."));
+    } else {
+      for (const priority of analysis.priorities) {
+        const card = makeElement("article", "priority-item");
+        card.append(
+          makeElement("strong", "", priority.name),
+          makeElement("p", "", priority.message),
+        );
+        priorities.append(card);
+      }
+    }
+
+    const icons = { secure: "✓", warning: "!", missing: "×" };
+    const headers = document.querySelector("#header-list");
+    headers.replaceChildren();
+    for (const item of analysis.results) {
+      const row = makeElement("article", `header-item ${item.status}`);
+      row.append(makeElement("span", "state-icon", icons[item.status]));
+      const identity = makeElement("div", "header-identity");
+      identity.append(
+        makeElement("div", "header-name", item.name),
+        makeElement("div", "header-value", item.present ? item.value : "No detectada"),
+      );
+      const detail = makeElement("div", "header-detail");
+      detail.append(makeElement("p", "", item.purpose));
+      const guidance = item.status === "secure"
+        ? `Configuración sólida · ${item.earned}/${item.weight} puntos.`
+        : item.status === "warning"
+          ? `${item.issue} · ${item.earned}/${item.weight} puntos.`
+          : `Recomendación: ${item.recommendation}`;
+      detail.append(makeElement("small", "", guidance));
+      const references = makeElement("div", "reference-links");
+      references.append(
+        makeReference("MDN", item.reference),
+        makeReference("OWASP", OWASP_REFERENCE),
+      );
+      detail.append(references);
+      row.append(identity, detail);
+      headers.append(row);
+    }
+    renderCookies(analysis.cookies);
+    const results = document.querySelector("#results");
+    results.classList.remove("hidden");
+    results.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyTheme(theme) {
+    const selected = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = selected;
+    document.querySelector(".theme-icon").textContent = selected === "dark" ? "☼" : "☾";
+    document.querySelector("#theme-toggle").setAttribute(
+      "aria-label",
+      selected === "dark" ? "Activar tema claro" : "Activar tema oscuro",
+    );
+    safeStorage(() => localStorage.setItem(THEME_KEY, selected));
+  }
+
+  function initializeInterface() {
+    const storedTheme = safeStorage(() => localStorage.getItem(THEME_KEY));
+    const preferredTheme = globalThis.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    applyTheme(storedTheme || preferredTheme);
+
+    document.querySelector("#theme-toggle").addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    });
+    document.querySelector("#sample-button").addEventListener("click", () => {
+      document.querySelector("#headers").value = [
+        "HTTP/2 200",
+        "content-security-policy: default-src 'self'; object-src 'none'",
+        "strict-transport-security: max-age=31536000; includeSubDomains",
+        "x-content-type-options: nosniff",
+        "x-frame-options: DENY",
+        "referrer-policy: strict-origin-when-cross-origin",
+        "set-cookie: __Host-session=demo-value; Secure; HttpOnly; SameSite=Lax; Path=/",
+      ].join("\n");
+      const status = document.querySelector("#status");
+      status.className = "status success";
+      status.textContent = "Ejemplo cargado. Pulsa Analizar ahora.";
+    });
+    document.querySelector("#analyze-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const status = document.querySelector("#status");
+      try {
+        const headers = parseRawHeaders(document.querySelector("#headers").value);
+        renderResults({ source: "pasted", analysis: analyzeHeaders(headers) });
+        status.className = "status success";
+        status.textContent = "Análisis completado en este dispositivo.";
+      } catch (error) {
+        status.className = "status";
+        status.textContent = error.message;
+      }
+    });
+  }
+
+  if (typeof document !== "undefined") initializeInterface();
+
   globalThis.HeaderGuardLite = Object.freeze({
     rules: RULES,
     parseRawHeaders,
     quality,
     analyzeCookies,
     analyzeHeaders,
+    renderResults,
+    renderCookies,
+    applyTheme,
   });
 })();
 </script>
