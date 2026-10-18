@@ -2,91 +2,130 @@
 
 # HeaderGuard — HTTP Security Headers
 
-HeaderGuard es una aplicación web educativa que analiza cabeceras HTTP de seguridad. Permite consultar una URL pública o pegar cabeceras manualmente y genera una puntuación acompañada de explicaciones y recomendaciones.
+HeaderGuard convierte cabeceras HTTP en un informe visual: comprueba nueve protecciones, detecta valores débiles, revisa atributos de cookies y explica cómo mejorar cada resultado.
 
-Creado por **abyssnx**.
-
-![Version](https://img.shields.io/badge/version-1.2.0-8b5cf6)
+[![CI](https://github.com/abyssnx/HeaderGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/abyssnx/HeaderGuard/actions/workflows/ci.yml)
+![Version](https://img.shields.io/badge/version-1.3.0-8b5cf6)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-a8ff60)
+![License](https://img.shields.io/badge/license-MIT-22c55e)
 
-> Consulta la [guía para publicar y presentar el proyecto](GUIA_GITHUB.md) si vas a subirlo por primera vez a GitHub.
+## Elige cómo utilizarlo
 
-## Características
+| Opción | Recomendada para | Cómo empezar | Escanear una URL |
+| --- | --- | --- | --- |
+| **Lite** | Probar HeaderGuard al instante o trabajar sin conexión | Abrir [HeaderGuard-Lite.html](HeaderGuard-Lite.html) | No; analiza cabeceras pegadas |
+| **Completa** | Analizar sitios públicos y usar la API | Instalar con Python o Docker | Sí, con protección SSRF |
 
-- Interfaz moderna, responsive y accesible, sin proceso de compilación frontend.
-- Identidad visual propia en azul abisal, cian y violeta, con indicadores cromáticos para los resultados.
-- Análisis de nueve cabeceras: CSP, HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, COOP, CORP y COEP.
-- Validación de valores débiles o permisivos, con puntuación parcial y prioridades.
-- Modo seguro de cabeceras pegadas para instalaciones que no quieran habilitar red saliente.
-- Escaneo remoto con defensas SSRF por capas.
-- Historial privado en el navegador, comparación entre análisis y temas claro/oscuro.
-- Exportación JSON, impresión/PDF, resúmenes copiables e insignias para GitHub.
-- Informe HTML autónomo y compartible, sin valores de cookies.
-- Análisis de `Secure`, `HttpOnly`, `SameSite` y prefijos seguros de cookies.
-- Generador de configuración para Nginx, Apache, FastAPI y Express.
-- Referencias educativas oficiales de MDN y OWASP en cada resultado.
-- Límite básico por IP, tiempo máximo, redirecciones limitadas y tamaño de entrada acotado.
-- Tests unitarios y de API, lint y cobertura en GitHub Actions.
-- Pruebas automáticas con Chromium para escritorio y móvil.
-- Imagen Docker ejecutada como usuario sin privilegios.
+Las dos opciones incluyen el mismo sistema de puntuación, recomendaciones, análisis de cookies, temas, historial privado, generador de configuraciones y exportaciones. Docker es opcional.
 
-## Por qué es diferente
+## Opción 1: HeaderGuard Lite
 
-HeaderGuard no se limita a comprobar si una cabecera existe. También identifica valores comunes que reducen su protección, diferencia entre advertencias y ausencias, y ordena las mejoras por impacto. El análisis se presenta de forma educativa para que el resultado sea útil incluso sin experiencia previa en seguridad web.
+No necesita instalación, Python, Docker ni servidor.
 
-El modo remoto se ha diseñado partiendo de que cualquier URL introducida es hostil. La resolución DNS, la IP conectada y cada redirección se validan antes de continuar.
+1. Descarga el repositorio o el ZIP de la última versión.
+2. Busca `HeaderGuard-Lite.html` y haz **doble clic**.
+3. Pulsa **Cargar ejemplo** o pega tus propias cabeceras.
+4. Pulsa **Analizar ahora**.
 
-## Vista previa
+Todo ocurre dentro del navegador. El archivo no realiza peticiones automáticas, funciona sin internet y no guarda el texto pegado.
 
-![Informe de HeaderGuard con análisis de cabeceras, cookies y generador de configuración](docs/assets/headerguard-preview.png)
+![HeaderGuard Lite abierto directamente en el navegador](docs/assets/headerguard-lite-desktop.png)
 
-Las capturas completas de [escritorio](docs/assets/headerguard-desktop.png) y [móvil](docs/assets/headerguard-mobile.png) también están disponibles en el repositorio y se regeneran en la integración continua.
+### Cómo conseguir cabeceras para pegarlas
 
-## Inicio rápido
+Puedes copiarlas desde las herramientas de desarrollo del navegador:
 
-Requiere Python 3.11 o posterior.
+1. Abre tu web y pulsa `F12`.
+2. Entra en **Red** o **Network** y recarga la página.
+3. Selecciona la petición principal.
+4. Copia las **cabeceras de respuesta** y pégalas en HeaderGuard Lite.
+
+También acepta texto como este:
+
+```http
+HTTP/2 200
+content-security-policy: default-src 'self'
+strict-transport-security: max-age=31536000; includeSubDomains
+x-content-type-options: nosniff
+```
+
+## Opción 2: HeaderGuard completo
+
+La edición completa añade análisis directo de URLs públicas y documentación interactiva de la API.
+
+### Instalar con Python
+
+Necesitas Python 3.11 o posterior.
+
+1. Descarga o clona el repositorio y abre una terminal dentro de la carpeta `HeaderGuard`.
+2. Crea un entorno aislado:
 
 ```bash
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
+```
 
-python -m pip install -e ".[dev]"
+3. Actívalo.
+
+En Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+En Linux o macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+4. Instala y arranca HeaderGuard:
+
+```bash
+python -m pip install -e .
 uvicorn app.main:app --reload
 ```
 
-Abre `http://127.0.0.1:8000`. La documentación de la API está en `http://127.0.0.1:8000/api/docs`.
+5. Abre [http://127.0.0.1:8000](http://127.0.0.1:8000). La API se documenta en [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs).
 
-### Docker
+### Instalar con Docker
+
+Si ya utilizas Docker, no necesitas preparar Python manualmente:
 
 ```bash
 docker build -t headerguard .
 docker run --rm -p 8000:8000 headerguard
 ```
 
-## Uso
+Después abre [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+## Cómo usar la edición completa
 
 ### Escanear una URL
 
-Introduce una URL pública HTTP o HTTPS. HeaderGuard realiza primero una solicitud `HEAD`; si el servidor no la admite, usa un `GET` parcial. Las redirecciones se validan individualmente.
+1. Mantén seleccionada la pestaña **Escanear URL**.
+2. Escribe una dirección pública `http://` o `https://`.
+3. Pulsa **Analizar**.
 
-```bash
-curl -X POST http://127.0.0.1:8000/api/scan \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com"}'
-```
+HeaderGuard valida el destino antes de conectarse, sigue redirecciones de forma controlada y muestra la URL final, la puntuación y las recomendaciones.
 
-### Analizar cabeceras pegadas
+### Pegar cabeceras
 
-```bash
-curl -X POST http://127.0.0.1:8000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"headers":"Content-Security-Policy: default-src '\''self'\''\nX-Content-Type-Options: nosniff"}'
-```
+1. Selecciona la pestaña **Pegar cabeceras**.
+2. Pega el bloque o pulsa **Cargar ejemplo**.
+3. Pulsa **Analizar**.
+
+Este modo no contacta con la web analizada y resulta útil para entornos internos.
+
+## Qué incluye el informe
+
+- Puntuación de 0 a 100 y nota de A a F.
+- Estados **correcta**, **mejorable** y **ausente**.
+- Tres prioridades explicadas por impacto.
+- Revisión de CSP, HSTS, políticas de origen y otras cabeceras.
+- Análisis de `Secure`, `HttpOnly`, `SameSite` y prefijos de cookies sin revelar valores.
+- Configuraciones para Nginx, Apache, FastAPI y Express.
+- Exportación JSON, informe HTML, impresión/PDF, resumen y badge.
+- Referencias educativas de MDN y OWASP.
 
 ## Modelo de puntuación
 
@@ -102,81 +141,87 @@ curl -X POST http://127.0.0.1:8000/api/analyze \
 | Cross-Origin-Resource-Policy | 5 |
 | Cross-Origin-Embedder-Policy | 5 |
 
-La puntuación combina presencia y una validación pragmática de los valores. Las configuraciones débiles reciben puntuación parcial. Aun así, el contexto de cada aplicación requiere revisión manual.
+La puntuación es educativa. Una nota alta no sustituye una auditoría ni garantiza que una aplicación sea segura.
 
-## Protección frente a SSRF
+## Seguridad y privacidad
 
-El escaneo remoto se trata como una operación no confiable:
+La edición completa trata cualquier URL como hostil:
 
-1. Solo se aceptan `http` y `https`, sin credenciales, en puertos 80/443.
-2. Se resuelven todos los registros del host y se rechaza el destino si alguno no es una IP global pública.
-3. La conexión se realiza directamente contra una de las IP ya validadas, manteniendo `Host`, SNI y validación TLS del dominio. Esto evita una segunda resolución susceptible a DNS rebinding.
-4. Cada redirección se resuelve y valida de nuevo antes de seguirla.
-5. Hay límites de tiempo, redirecciones, tamaño y frecuencia.
+1. Solo acepta HTTP/HTTPS y los puertos 80/443, sin credenciales.
+2. Rechaza loopback, redes privadas, metadatos cloud y cualquier IP no pública.
+3. Fija la conexión a una IP ya validada manteniendo `Host`, SNI y la validación TLS.
+4. Repite la validación en cada redirección.
+5. Limita tiempo, redirecciones, tamaño de entrada y frecuencia.
 
-Para producción multiinstancia, sustituye el limitador en memoria por uno compartido (por ejemplo, Redis), configura límites de egreso en la infraestructura y ejecuta detrás de un proxy que normalice la IP del cliente. Si no necesitas escaneo remoto, elimina o deshabilita `/api/scan` y conserva `/api/analyze`.
+En ambas ediciones, los valores de cookies se eliminan antes de mostrar, guardar o exportar resultados. Consulta [SECURITY.md](SECURITY.md) para informar de una vulnerabilidad.
 
-## Tests
+## Solución de problemas
 
-```bash
-ruff check .
-pytest --cov=app --cov-report=term-missing
+### Windows impide activar el entorno
+
+Puedes ejecutar los comandos sin activarlo:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -e .
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-Los tests cubren el analizador, la API y casos SSRF relevantes: loopback, metadatos cloud, redes privadas, puertos alternativos, DNS con resultados mixtos y redirecciones a IP privadas.
+### El puerto 8000 ya está ocupado
 
-Las pruebas opcionales de interfaz utilizan Chromium:
+Utiliza otro puerto y abre la dirección que aparezca en la terminal:
+
+```bash
+uvicorn app.main:app --reload --port 8080
+```
+
+### Una URL pública no puede analizarse
+
+El sitio puede bloquear solicitudes automatizadas, utilizar un puerto distinto o resolver a una red no pública. Puedes copiar sus cabeceras y usar **Pegar cabeceras** o la edición Lite.
+
+### Lite abre una página en blanco
+
+Vuelve a descargar `HeaderGuard-Lite.html` completo y ábrelo con un navegador moderno. No lo guardes desde la vista previa de GitHub; utiliza **Download raw file** o el ZIP de la versión.
+
+## Desarrollo y pruebas
 
 ```bash
 python -m pip install -e ".[dev,ui]"
 python -m playwright install chromium
-pytest tests/test_ui.py
+python scripts/build_standalone.py --check
+ruff check .
+pytest --cov=app --cov-report=term-missing
 ```
 
-## Estructura
+GitHub Actions verifica el backend, las defensas SSRF, la paridad Python/JavaScript, el HTML generado y los dos recorridos reales con Chromium.
+
+## Estructura del repositorio
 
 ```text
-headerguard/
-├── .github/workflows/ci.yml
-├── app/
-│   ├── analyzer.py       # Reglas, puntuación y parser
-│   ├── main.py           # API, límites y archivos estáticos
-│   ├── scanner.py        # Cliente HTTP con protección SSRF
-│   └── static/           # Interfaz HTML/CSS/JS
-├── tests/
-├── docs/assets/            # Recursos visuales de GitHub
-├── CHANGELOG.md
-├── CONTRIBUTING.md
+HeaderGuard/
+├── HeaderGuard-Lite.html    # Edición autónoma lista para abrir
+├── app/                     # API, escáner seguro e interfaz completa
+├── standalone/              # Fuentes mantenibles de la edición Lite
+├── scripts/                 # Generador determinista del HTML autónomo
+├── tests/                   # Pruebas unitarias, seguridad y navegador
+├── docs/
+│   ├── ARQUITECTURA.md
+│   └── assets/
+├── .github/                 # CI, Dependabot y plantillas
 ├── Dockerfile
-├── GUIA_GITHUB.md
-├── LINKEDIN.txt
 ├── SECURITY.md
-└── pyproject.toml
+└── LICENSE
 ```
 
-## Límites y uso responsable
+La explicación técnica de ambas ediciones está en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Las novedades se publican en [CHANGELOG.md](CHANGELOG.md).
 
-- La presencia de cabeceras no equivale a seguridad completa.
-- El análisis de cookies es heurístico: algunas cookies accesibles desde JavaScript pueden omitir `HttpOnly` de forma intencionada.
-- Algunos sitios bloquean solicitudes automatizadas o `HEAD`.
-- El host debe permitir salida TCP directa a los puertos 80/443. El escáner no usa proxies HTTP del entorno porque resolver de nuevo a través de un proxy rompería la fijación DNS que evita rebinding.
-- Analiza únicamente activos propios o con autorización.
-- No se almacena el contenido de las respuestas; solo se leen cabeceras y, en el fallback, una cantidad acotada del cuerpo.
+## Colaborar
 
-## Próximas mejoras
-
-- Internacionalización completa en inglés y español.
-- Cliente CLI reutilizando el mismo motor de análisis.
-- Importación de informes anteriores y comparación detallada por cabecera.
-- Perfiles de puntuación adaptados a diferentes tipos de aplicación.
-- Limitador compartido para despliegues con varias instancias.
-
-## Participar y seguridad
-
-- Para proponer cambios, consulta [CONTRIBUTING.md](CONTRIBUTING.md).
-- Para informar de una vulnerabilidad, sigue [SECURITY.md](SECURITY.md) y evita las incidencias públicas.
-- Las novedades de cada versión están en [CHANGELOG.md](CHANGELOG.md).
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de proponer cambios. Utiliza únicamente sistemas propios o para los que tengas autorización.
 
 ## Licencia
 
 Publicado bajo licencia [MIT](LICENSE).
+
+---
+
+Creado por **abyssnx**.

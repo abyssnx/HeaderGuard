@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Analiza cabeceras HTTP de seguridad localmente, sin instalar nada ni enviar datos.">
+  <title>HeaderGuard Lite · analizador local de cabeceras HTTP</title>
+  <style>{{STYLE}}</style>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="logo" href="#main" aria-label="Ir al inicio de HeaderGuard Lite">
+      <span class="logo-mark" aria-hidden="true">HG</span>
+      <span><strong>HeaderGuard</strong><small>by abyssnx</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="local-pill"><span aria-hidden="true"></span> Sin conexión</span>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema"><span class="theme-icon" aria-hidden="true">☼</span></button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Edición Lite · análisis local</p>
+        <h1 id="hero-title">Convierte cabeceras HTTP en <em>acciones claras.</em></h1>
+        <p class="hero-lead">Pega la respuesta de un servidor y descubre qué protecciones existen, cuáles son débiles y cómo mejorarlas. Sin cuentas, sin servidor y sin enviar datos.</p>
+        <div class="trust-row" aria-label="Características de privacidad"><span>✓ 100 % local</span><span>✓ Valores de cookies ocultos</span><span>✓ Código abierto</span></div>
+      </div>
+      <aside class="privacy-card">
+        <div class="privacy-icon" aria-hidden="true">⌁</div>
+        <div><strong>Todo ocurre en este navegador</strong><p>El texto pegado permanece en memoria y nunca sale de tu equipo.</p></div>
+      </aside>
+    </section>
+    <section class="workspace" aria-label="Analizador de cabeceras">
+      <div class="input-card panel">
+        <div class="panel-heading"><div><span class="step">01</span><h2>Pega las cabeceras</h2></div><span class="limit">Máximo 32 KB</span></div>
+        <form id="analyze-form" novalidate>
+          <label for="headers">Respuesta HTTP o lista de cabeceras</label>
+          <textarea id="headers" name="headers" spellcheck="false" required placeholder="HTTP/2 200&#10;content-security-policy: default-src 'self'&#10;strict-transport-security: max-age=31536000"></textarea>
+          <div class="form-footer">
+            <p>Admite una línea de estado opcional y varias cabeceras Set-Cookie.</p>
+            <div class="form-actions">
+              <button id="sample-button" class="button ghost" type="button">Cargar ejemplo</button>
+              <button id="analyze-button" class="button primary" type="submit"><span>Analizar ahora</span><b aria-hidden="true">→</b></button>
+            </div>
+          </div>
+        </form>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+      <section id="results" class="results hidden" aria-live="polite" aria-labelledby="results-title">
+        <div class="section-heading"><div><span class="step">02</span><h2 id="results-title">Informe de seguridad</h2></div><span class="local-result">Analizado localmente</span></div>
+        <div class="overview-grid">
+          <article class="score-card panel">
+            <div id="score-ring" class="score-ring"><div><strong id="score">0</strong><span>/100</span></div></div>
+            <div class="score-copy"><span class="overline">Resultado global</span><h3>Nota <span id="grade">—</span></h3><p id="summary">Todavía no hay resultados.</p></div>
+          </article>
+          <div class="stat-grid">
+            <article class="stat secure"><span>Correctas</span><strong id="secure-count">0</strong><small>Configuración sólida</small></article>
+            <article class="stat warning"><span>Mejorables</span><strong id="warning-count">0</strong><small>Necesitan revisión</small></article>
+            <article class="stat missing"><span>Ausentes</span><strong id="missing-count">0</strong><small>Protecciones que faltan</small></article>
+          </div>
+        </div>
+        <section class="priority-card panel" aria-labelledby="priority-title">
+          <div class="panel-heading compact"><div><span class="step">03</span><h2 id="priority-title">Prioridades</h2></div><span>Empieza por estas mejoras</span></div>
+          <div id="priority-list" class="priority-list"></div>
+        </section>
+        <section class="detail-card panel" aria-labelledby="headers-title">
+          <div class="panel-heading compact"><div><span class="step">04</span><h2 id="headers-title">Cabeceras evaluadas</h2></div><span>Nueve controles esenciales</span></div>
+          <div id="header-list" class="header-list"></div>
+        </section>
+        <section id="cookie-results" class="detail-card panel hidden" aria-labelledby="cookies-title">
+          <div class="panel-heading compact"><div><span class="step">05</span><h2 id="cookies-title">Cookies detectadas</h2></div><span id="cookie-summary">Valores eliminados por privacidad</span></div>
+          <div id="cookie-list" class="cookie-list"></div>
+        </section>
+        <div class="tools-grid">
+          <section class="tool-card panel" aria-labelledby="config-title">
+            <div class="tool-heading"><div><span class="step">06</span><h2 id="config-title">Configuración recomendada</h2></div>
+              <select id="server-type" aria-label="Tipo de servidor"><option value="nginx">Nginx</option><option value="apache">Apache</option><option value="fastapi">FastAPI</option><option value="express">Express</option></select>
+            </div>
+            <pre id="config-output" tabindex="0"></pre>
+            <button id="copy-config" class="button ghost full" type="button">Copiar configuración</button>
+          </section>
+          <section class="tool-card panel" aria-labelledby="export-title">
+            <div class="tool-heading"><div><span class="step">07</span><h2 id="export-title">Exportar y compartir</h2></div></div>
+            <p class="tool-copy">Guarda el informe sin exponer valores de cookies ni el bloque original.</p>
+            <div class="export-grid">
+              <button id="download-json" class="export-button" type="button"><strong>JSON</strong><span>Datos estructurados</span></button>
+              <button id="download-html" class="export-button" type="button"><strong>HTML</strong><span>Informe visual</span></button>
+              <button id="copy-summary" class="export-button" type="button"><strong>Resumen</strong><span>Texto breve</span></button>
+              <button id="copy-badge" class="export-button" type="button"><strong>Badge</strong><span>Para GitHub</span></button>
+            </div>
+            <button id="print-report" class="button ghost full" type="button">Imprimir o guardar como PDF</button>
+          </section>
+        </div>
+        <section class="history-card panel" aria-labelledby="history-title">
+          <div class="panel-heading compact"><div><span class="step">08</span><h2 id="history-title">Historial privado</h2></div><span>Máximo seis resúmenes en este navegador</span></div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </section>
+    </section>
+    <aside id="complete-edition" class="upgrade-card">
+      <div><span class="upgrade-kicker">¿Quieres analizar una web directamente?</span><h2>La edición completa añade escaneo por URL protegido frente a SSRF.</h2><p>Se instala con Python o Docker y conserva este mismo análisis manual.</p></div>
+      <span class="upgrade-label">HeaderGuard Completo → README</span>
+    </aside>
+  </main>
+  <footer>
+    <p><strong>HeaderGuard Lite</strong> · Herramienta educativa, no sustituye una auditoría profesional.</p>
+    <p>Creado por <strong>abyssnx</strong> <span aria-hidden="true">◆</span> v1.3</p>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>{{SCRIPT}}</script>
+</body>
+</html>

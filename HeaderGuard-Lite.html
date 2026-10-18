@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EuX43ozCxP/wk2cTXm3SJXbnCzcIZEybBdowz7+gw4I='; style-src 'sha256-YF181ueBalt8cDmtE4bUOa/YyFeSnmjXgR6XwlmAb00='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Analiza cabeceras HTTP de seguridad localmente, sin instalar nada ni enviar datos.">
+  <title>HeaderGuard Lite · analizador local de cabeceras HTTP</title>
+  <style>:root {
+  color-scheme: dark;
+  --bg: #07101f; --panel: rgba(13, 27, 48, .84); --panel-solid: #0e1c31;
+  --text: #f0f7ff; --muted: #91a4bf; --line: rgba(154, 181, 215, .16);
+  --cyan: #40e7d0; --blue: #5f83ff; --violet: #a86cff;
+  --green: #60e6ad; --amber: #ffc56b; --red: #ff718d;
+  --shadow: 0 26px 70px rgba(0, 0, 0, .28);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f8ff; --panel: rgba(255, 255, 255, .9); --panel-solid: #fff;
+  --text: #10213a; --muted: #586c87; --line: rgba(35, 65, 105, .14);
+  --cyan: #008f89; --blue: #315bd9; --violet: #7640d8;
+  --green: #128761; --amber: #b66400; --red: #c6375b;
+  --shadow: 0 22px 60px rgba(31, 66, 112, .13);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  min-width: 300px; margin: 0; overflow-x: hidden;
+  background: linear-gradient(rgba(93,131,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(93,131,255,.04) 1px, transparent 1px), var(--bg);
+  background-size: 44px 44px; color: var(--text); font-size: 15px; line-height: 1.6;
+}
+button, textarea { font: inherit; }
+button { color: inherit; }
+a { color: inherit; }
+.hidden { display: none !important; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--cyan) 80%, white); outline-offset: 3px; }
+.ambient { position: fixed; z-index: -1; width: 34rem; height: 34rem; border-radius: 50%; filter: blur(110px); opacity: .13; pointer-events: none; }
+.ambient-one { top: -12rem; left: -10rem; background: var(--blue); }
+.ambient-two { top: 24rem; right: -16rem; background: var(--cyan); }
+.topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  width: min(1180px, calc(100% - 36px)); margin: 18px auto 0; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--bg) 76%, transparent);
+  box-shadow: 0 12px 35px rgba(0,0,0,.08); backdrop-filter: blur(18px);
+}
+.logo { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; }
+.logo-mark { display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid color-mix(in srgb,var(--cyan) 55%,transparent); border-radius: 12px; background: linear-gradient(145deg,rgba(64,231,208,.18),rgba(95,131,255,.13)); color: var(--cyan); font-size: 12px; font-weight: 900; }
+.logo strong { display: block; font-size: 14px; }
+.logo small { display: block; color: var(--muted); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.top-actions { display: flex; align-items: center; gap: 8px; }
+.local-pill, .local-result { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.local-pill span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+.icon-button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); cursor: pointer; }
+.theme-icon { color: var(--amber); font-size: 19px; }
+main { width: min(1120px, calc(100% - 36px)); margin: 0 auto; }
+.hero { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(270px,.6fr); gap: 48px; align-items: end; padding: 100px 0 58px; }
+.eyebrow, .upgrade-kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.eyebrow span { width: 22px; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+h1, h2, h3, p { margin-top: 0; }
+h1 { max-width: 760px; margin-bottom: 20px; font-size: clamp(42px,6.4vw,76px); line-height: .98; letter-spacing: -.065em; }
+h1 em { display: block; color: transparent; font-style: normal; background: linear-gradient(90deg,var(--cyan),#79a6ff 55%,var(--violet)); background-clip: text; }
+.hero-lead { max-width: 660px; margin-bottom: 24px; color: var(--muted); font-size: 17px; }
+.trust-row { display: flex; flex-wrap: wrap; gap: 10px 20px; color: var(--muted); font-size: 12px; font-weight: 650; }
+.privacy-card { display: flex; gap: 14px; padding: 20px; border: 1px solid color-mix(in srgb,var(--cyan) 24%,var(--line)); border-radius: 20px; background: linear-gradient(135deg,rgba(64,231,208,.08),var(--panel)); box-shadow: var(--shadow); }
+.privacy-icon { display: grid; place-items: center; flex: 0 0 42px; height: 42px; border-radius: 13px; background: rgba(64,231,208,.13); color: var(--cyan); font-size: 25px; }
+.privacy-card strong { font-size: 14px; }
+.privacy-card p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.workspace { padding: 12px 0 50px; }
+.panel { border: 1px solid var(--line); border-radius: 24px; background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+.input-card { padding: 28px; }
+.panel-heading, .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.panel-heading > div, .section-heading > div { display: flex; align-items: center; gap: 11px; }
+.panel-heading h2, .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.025em; }
+.panel-heading > span, .limit { color: var(--muted); font-size: 11px; }
+.step { display: grid; place-items: center; width: 32px; height: 25px; border-radius: 8px; background: color-mix(in srgb,var(--blue) 16%,transparent); color: #8fa9ff; font: 800 10px/1 ui-monospace,monospace; }
+label { display: block; margin-bottom: 9px; color: var(--muted); font-size: 12px; font-weight: 700; }
+textarea { display: block; width: 100%; min-height: 240px; resize: vertical; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb,var(--bg) 70%,transparent); color: var(--text); font: 13px/1.75 "Cascadia Code",Consolas,monospace; caret-color: var(--cyan); transition: border-color .2s,box-shadow .2s; }
+textarea:focus { border-color: color-mix(in srgb,var(--cyan) 60%,transparent); box-shadow: 0 0 0 4px rgba(64,231,208,.08); }
+textarea::placeholder { color: color-mix(in srgb,var(--muted) 58%,transparent); }
+.form-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 16px; }
+.form-footer p { margin: 0; color: var(--muted); font-size: 11px; }
+.form-actions { display: flex; gap: 9px; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 42px; padding: 0 17px; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer; transition: transform .18s,border-color .18s,filter .18s; }
+.button:hover { transform: translateY(-1px); }
+.button.ghost { background: transparent; color: var(--muted); }
+.button.primary { border-color: transparent; background: linear-gradient(120deg,#25cdbd,#516fe6); color: #05131f; box-shadow: 0 10px 28px rgba(48,202,191,.18); }
+.button.primary b { font-size: 17px; }
+.status { min-height: 22px; margin-top: 12px; color: var(--red); font-size: 12px; }
+.status.success { color: var(--green); }
+.results { padding-top: 54px; }
+.section-heading { margin-bottom: 18px; }
+.overview-grid { display: grid; grid-template-columns: .95fr 1.25fr; gap: 16px; }
+.score-card { display: flex; align-items: center; gap: 24px; padding: 24px; }
+.score-ring { --score-angle: 0deg; position: relative; display: grid; place-items: center; width: 124px; height: 124px; flex: 0 0 124px; border-radius: 50%; background: conic-gradient(var(--cyan) var(--score-angle),var(--line) 0); }
+.score-ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--panel-solid); }
+.score-ring div { position: relative; text-align: center; }
+.score-ring strong { font-size: 34px; line-height: 1; letter-spacing: -.05em; }
+.score-ring span { color: var(--muted); font-size: 11px; }
+.overline { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.score-copy h3 { margin: 5px 0 4px; font-size: 24px; }
+.score-copy h3 span { color: var(--cyan); }
+.score-copy p { margin: 0; color: var(--muted); font-size: 12px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.stat { position: relative; overflow: hidden; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
+.stat::after { content: ""; position: absolute; right: -25px; bottom: -35px; width: 90px; height: 90px; border-radius: 50%; opacity: .09; background: currentColor; }
+.stat span, .stat small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+.stat strong { display: block; margin: 10px 0 3px; font-size: 36px; line-height: 1; }
+.stat.secure { color: var(--green); } .stat.warning { color: var(--amber); } .stat.missing { color: var(--red); }
+.stat small { color: var(--muted); font-size: 9px; letter-spacing: 0; text-transform: none; }
+.priority-card, .detail-card { margin-top: 16px; padding: 24px; }
+.panel-heading.compact { margin-bottom: 16px; }
+.priority-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 11px; }
+.priority-item { padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb,var(--bg) 50%,transparent); }
+.priority-item strong { display: block; margin-bottom: 5px; color: var(--amber); font: 750 12px/1.35 ui-monospace,monospace; overflow-wrap: anywhere; }
+.priority-item p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.priority-empty { grid-column: 1/-1; margin: 0; padding: 16px; color: var(--green); text-align: center; }
+.header-list, .cookie-list { display: grid; gap: 9px; }
+.header-item, .cookie-item { display: grid; grid-template-columns: 32px minmax(180px,.72fr) minmax(260px,1.28fr); gap: 14px; align-items: start; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb,var(--bg) 45%,transparent); }
+.state-icon { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; font-weight: 900; }
+.header-item.secure .state-icon { background: rgba(96,230,173,.13); color: var(--green); }
+.header-item.warning .state-icon { background: rgba(255,197,107,.13); color: var(--amber); }
+.header-item.missing .state-icon { background: rgba(255,113,141,.12); color: var(--red); }
+.header-name { margin-bottom: 5px; font: 750 12px/1.4 ui-monospace,monospace; overflow-wrap: anywhere; }
+.header-value { max-height: 48px; overflow: auto; color: var(--muted); font: 10px/1.5 ui-monospace,monospace; overflow-wrap: anywhere; }
+.header-detail p { margin-bottom: 5px; color: var(--muted); font-size: 11px; }
+.header-detail small { color: var(--text); font-size: 10px; }
+.reference-links { display: flex; gap: 8px; margin-top: 8px; }
+.reference-link { color: var(--cyan); font-size: 10px; font-weight: 750; text-decoration: none; }
+.reference-link:hover { text-decoration: underline; }
+.cookie-item { grid-template-columns: 1fr auto; }
+.cookie-head { display: flex; align-items: center; gap: 10px; }
+.cookie-head strong { font: 750 12px ui-monospace,monospace; }
+.cookie-status { padding: 3px 7px; border-radius: 99px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.cookie-status.secure { background: rgba(96,230,173,.12); color: var(--green); }
+.cookie-status.warning { background: rgba(255,197,107,.12); color: var(--amber); }
+.cookie-attributes { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+.cookie-attributes span { padding: 4px 7px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font: 9px ui-monospace,monospace; }
+.cookie-attributes span.active { border-color: rgba(96,230,173,.25); color: var(--green); }
+.cookie-issues { grid-column: 1/-1; margin: 0; color: var(--amber); font-size: 10px; }
+.cookie-reference { justify-self: start; }
+.tools-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 16px; margin-top: 16px; }
+.tool-card, .history-card { padding: 24px; }
+.tool-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.tool-heading > div { display: flex; align-items: center; gap: 11px; }
+.tool-heading h2 { margin: 0; font-size: 18px; }
+select { padding: 8px 30px 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-solid); color: var(--text); font: 700 11px ui-monospace,monospace; }
+pre { min-height: 240px; max-height: 340px; margin: 0 0 12px; padding: 15px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb,var(--bg) 72%,transparent); color: #8cebdc; font: 10px/1.6 "Cascadia Code",Consolas,monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+:root[data-theme="light"] pre { color: #076e69; }
+.button.full { width: 100%; }
+.tool-copy { color: var(--muted); font-size: 12px; }
+.export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+.export-button { padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: color-mix(in srgb,var(--bg) 48%,transparent); text-align: left; cursor: pointer; }
+.export-button:hover { border-color: color-mix(in srgb,var(--cyan) 42%,var(--line)); }
+.export-button strong, .export-button span { display: block; }
+.export-button strong { margin-bottom: 3px; color: var(--cyan); font-size: 12px; }
+.export-button span { color: var(--muted); font-size: 9px; }
+.history-card { margin-top: 16px; }
+.history-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+.history-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: color-mix(in srgb,var(--bg) 45%,transparent); }
+.history-item strong { display: block; font-size: 11px; }
+.history-item span { color: var(--muted); font-size: 9px; }
+.history-score { color: var(--cyan); font-size: 18px; font-weight: 900; }
+.empty-history { grid-column: 1/-1; margin: 0; color: var(--muted); font-size: 11px; text-align: center; }
+.toast { position: fixed; right: 18px; bottom: 18px; z-index: 40; max-width: min(330px,calc(100% - 36px)); padding: 11px 14px; border: 1px solid rgba(64,231,208,.25); border-radius: 11px; background: var(--panel-solid); box-shadow: var(--shadow); color: var(--text); font-size: 11px; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .2s,transform .2s; }
+.toast.visible { opacity: 1; transform: translateY(0); }
+.upgrade-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0 80px; padding: 28px; border: 1px solid color-mix(in srgb,var(--violet) 30%,var(--line)); border-radius: 24px; background: linear-gradient(120deg,rgba(168,108,255,.08),rgba(95,131,255,.09)); }
+.upgrade-kicker { margin-bottom: 8px; color: #c495ff; }
+.upgrade-card h2 { max-width: 690px; margin-bottom: 7px; font-size: 21px; line-height: 1.25; }
+.upgrade-card p { margin: 0; color: var(--muted); font-size: 12px; }
+.upgrade-label { flex: 0 0 auto; padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; color: #caa5ff; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+footer { display: flex; justify-content: space-between; gap: 20px; width: min(1120px,calc(100% - 36px)); margin: 0 auto; padding: 26px 0 38px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+footer p { margin: 0; } footer span { margin: 0 6px; color: var(--cyan); }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 26px; padding-top: 72px; } .privacy-card { max-width: 540px; } .overview-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .topbar, main, footer { width: min(100% - 24px,1120px); } .local-pill { display: none; }
+  .hero { padding: 58px 0 38px; } h1 { font-size: clamp(40px,14vw,58px); } .hero-lead { font-size: 15px; }
+  .input-card, .priority-card, .detail-card { padding: 18px; border-radius: 19px; }
+  .panel-heading > span, .section-heading > span { display: none; } textarea { min-height: 270px; }
+  .form-footer { align-items: stretch; flex-direction: column; } .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .score-ring { width: 106px; height: 106px; flex-basis: 106px; } .stat-grid { gap: 7px; } .stat { padding: 15px 10px; } .stat strong { font-size: 28px; }
+  .priority-list { grid-template-columns: 1fr; } .header-item { grid-template-columns: 30px 1fr; } .header-detail { grid-column: 2; }
+  .cookie-item { grid-template-columns: 1fr; } .cookie-attributes { justify-content: flex-start; }
+  .tools-grid { grid-template-columns: 1fr; } .history-list { grid-template-columns: 1fr 1fr; }
+  .upgrade-card, footer { align-items: flex-start; flex-direction: column; } .upgrade-label { white-space: normal; }
+}
+@media (max-width: 420px) { .form-actions,.export-grid,.history-list { grid-template-columns: 1fr; } .score-card { align-items: flex-start; flex-direction: column; } .stat span { letter-spacing: 0; text-transform: none; } .stat small { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+@media print { :root { color-scheme: light; --bg:#fff; --panel:#fff; --panel-solid:#fff; --text:#101828; --muted:#475467; --line:#d0d5dd; } .topbar,.hero,.input-card,.upgrade-card,footer { display:none; } body { background:#fff; } main { width:100%; } .results { padding:0; } .panel,.stat { box-shadow:none; break-inside:avoid; } }
+</style>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="logo" href="#main" aria-label="Ir al inicio de HeaderGuard Lite">
+      <span class="logo-mark" aria-hidden="true">HG</span>
+      <span><strong>HeaderGuard</strong><small>by abyssnx</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="local-pill"><span aria-hidden="true"></span> Sin conexión</span>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema"><span class="theme-icon" aria-hidden="true">☼</span></button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Edición Lite · análisis local</p>
+        <h1 id="hero-title">Convierte cabeceras HTTP en <em>acciones claras.</em></h1>
+        <p class="hero-lead">Pega la respuesta de un servidor y descubre qué protecciones existen, cuáles son débiles y cómo mejorarlas. Sin cuentas, sin servidor y sin enviar datos.</p>
+        <div class="trust-row" aria-label="Características de privacidad"><span>✓ 100 % local</span><span>✓ Valores de cookies ocultos</span><span>✓ Código abierto</span></div>
+      </div>
+      <aside class="privacy-card">
+        <div class="privacy-icon" aria-hidden="true">⌁</div>
+        <div><strong>Todo ocurre en este navegador</strong><p>El texto pegado permanece en memoria y nunca sale de tu equipo.</p></div>
+      </aside>
+    </section>
+    <section class="workspace" aria-label="Analizador de cabeceras">
+      <div class="input-card panel">
+        <div class="panel-heading"><div><span class="step">01</span><h2>Pega las cabeceras</h2></div><span class="limit">Máximo 32 KB</span></div>
+        <form id="analyze-form" novalidate>
+          <label for="headers">Respuesta HTTP o lista de cabeceras</label>
+          <textarea id="headers" name="headers" spellcheck="false" required placeholder="HTTP/2 200&#10;content-security-policy: default-src 'self'&#10;strict-transport-security: max-age=31536000"></textarea>
+          <div class="form-footer">
+            <p>Admite una línea de estado opcional y varias cabeceras Set-Cookie.</p>
+            <div class="form-actions">
+              <button id="sample-button" class="button ghost" type="button">Cargar ejemplo</button>
+              <button id="analyze-button" class="button primary" type="submit"><span>Analizar ahora</span><b aria-hidden="true">→</b></button>
+            </div>
+          </div>
+        </form>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+      <section id="results" class="results hidden" aria-live="polite" aria-labelledby="results-title">
+        <div class="section-heading"><div><span class="step">02</span><h2 id="results-title">Informe de seguridad</h2></div><span class="local-result">Analizado localmente</span></div>
+        <div class="overview-grid">
+          <article class="score-card panel">
+            <div id="score-ring" class="score-ring"><div><strong id="score">0</strong><span>/100</span></div></div>
+            <div class="score-copy"><span class="overline">Resultado global</span><h3>Nota <span id="grade">—</span></h3><p id="summary">Todavía no hay resultados.</p></div>
+          </article>
+          <div class="stat-grid">
+            <article class="stat secure"><span>Correctas</span><strong id="secure-count">0</strong><small>Configuración sólida</small></article>
+            <article class="stat warning"><span>Mejorables</span><strong id="warning-count">0</strong><small>Necesitan revisión</small></article>
+            <article class="stat missing"><span>Ausentes</span><strong id="missing-count">0</strong><small>Protecciones que faltan</small></article>
+          </div>
+        </div>
+        <section class="priority-card panel" aria-labelledby="priority-title">
+          <div class="panel-heading compact"><div><span class="step">03</span><h2 id="priority-title">Prioridades</h2></div><span>Empieza por estas mejoras</span></div>
+          <div id="priority-list" class="priority-list"></div>
+        </section>
+        <section class="detail-card panel" aria-labelledby="headers-title">
+          <div class="panel-heading compact"><div><span class="step">04</span><h2 id="headers-title">Cabeceras evaluadas</h2></div><span>Nueve controles esenciales</span></div>
+          <div id="header-list" class="header-list"></div>
+        </section>
+        <section id="cookie-results" class="detail-card panel hidden" aria-labelledby="cookies-title">
+          <div class="panel-heading compact"><div><span class="step">05</span><h2 id="cookies-title">Cookies detectadas</h2></div><span id="cookie-summary">Valores eliminados por privacidad</span></div>
+          <div id="cookie-list" class="cookie-list"></div>
+        </section>
+        <div class="tools-grid">
+          <section class="tool-card panel" aria-labelledby="config-title">
+            <div class="tool-heading"><div><span class="step">06</span><h2 id="config-title">Configuración recomendada</h2></div>
+              <select id="server-type" aria-label="Tipo de servidor"><option value="nginx">Nginx</option><option value="apache">Apache</option><option value="fastapi">FastAPI</option><option value="express">Express</option></select>
+            </div>
+            <pre id="config-output" tabindex="0"></pre>
+            <button id="copy-config" class="button ghost full" type="button">Copiar configuración</button>
+          </section>
+          <section class="tool-card panel" aria-labelledby="export-title">
+            <div class="tool-heading"><div><span class="step">07</span><h2 id="export-title">Exportar y compartir</h2></div></div>
+            <p class="tool-copy">Guarda el informe sin exponer valores de cookies ni el bloque original.</p>
+            <div class="export-grid">
+              <button id="download-json" class="export-button" type="button"><strong>JSON</strong><span>Datos estructurados</span></button>
+              <button id="download-html" class="export-button" type="button"><strong>HTML</strong><span>Informe visual</span></button>
+              <button id="copy-summary" class="export-button" type="button"><strong>Resumen</strong><span>Texto breve</span></button>
+              <button id="copy-badge" class="export-button" type="button"><strong>Badge</strong><span>Para GitHub</span></button>
+            </div>
+            <button id="print-report" class="button ghost full" type="button">Imprimir o guardar como PDF</button>
+          </section>
+        </div>
+        <section class="history-card panel" aria-labelledby="history-title">
+          <div class="panel-heading compact"><div><span class="step">08</span><h2 id="history-title">Historial privado</h2></div><span>Máximo seis resúmenes en este navegador</span></div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </section>
+    </section>
+    <aside id="complete-edition" class="upgrade-card">
+      <div><span class="upgrade-kicker">¿Quieres analizar una web directamente?</span><h2>La edición completa añade escaneo por URL protegido frente a SSRF.</h2><p>Se instala con Python o Docker y conserva este mismo análisis manual.</p></div>
+      <span class="upgrade-label">HeaderGuard Completo → README</span>
+    </aside>
+  </main>
+  <footer>
+    <p><strong>HeaderGuard Lite</strong> · Herramienta educativa, no sustituye una auditoría profesional.</p>
+    <p>Creado por <strong>abyssnx</strong> <span aria-hidden="true">◆</span> v1.3</p>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>(() => {
+  "use strict";
+
+  const RULES = [{"name":"strict-transport-security","purpose":"Obliga al navegador a usar HTTPS y reduce ataques de downgrade.","recommendation":"max-age=31536000; includeSubDomains (añade preload solo tras comprobar requisitos).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security","weight":20},{"name":"content-security-policy","purpose":"Limita los orígenes desde los que se puede cargar contenido y mitiga XSS.","recommendation":"Empieza con default-src 'self' y ajusta cada directiva a los recursos necesarios.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy","weight":25},{"name":"x-content-type-options","purpose":"Evita que el navegador adivine tipos MIME.","recommendation":"nosniff","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options","weight":10},{"name":"x-frame-options","purpose":"Reduce el riesgo de clickjacking en navegadores antiguos.","recommendation":"DENY o SAMEORIGIN; prioriza también frame-ancestors en CSP.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options","weight":10},{"name":"referrer-policy","purpose":"Controla cuánta información de navegación se envía a otros sitios.","recommendation":"strict-origin-when-cross-origin","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy","weight":10},{"name":"permissions-policy","purpose":"Restringe APIs sensibles del navegador, como cámara o geolocalización.","recommendation":"Desactiva lo que no uses, por ejemplo: camera=(), microphone=(), geolocation=().","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy","weight":10},{"name":"cross-origin-opener-policy","purpose":"Aísla el contexto de navegación frente a ventanas de otros orígenes.","recommendation":"same-origin (comprueba antes integraciones con ventanas externas).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy","weight":5},{"name":"cross-origin-resource-policy","purpose":"Limita qué otros orígenes pueden cargar los recursos de la respuesta.","recommendation":"same-origin o same-site según el caso de uso.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Resource-Policy","weight":5},{"name":"cross-origin-embedder-policy","purpose":"Exige recursos compatibles con aislamiento de origen cruzado.","recommendation":"require-corp solo si todos los recursos externos son compatibles.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy","weight":5}];
+  const COOKIE_REFERENCE = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie";
+  const OWASP_REFERENCE = "https://owasp.org/www-project-secure-headers/";
+  const THEME_KEY = "headerguard.lite.theme.v1";
+  const HISTORY_KEY = "headerguard.lite.history.v1";
+  const SECURITY_PROFILE = [
+    ["Content-Security-Policy", "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"],
+    ["Strict-Transport-Security", "max-age=31536000; includeSubDomains"],
+    ["X-Content-Type-Options", "nosniff"],
+    ["X-Frame-Options", "DENY"],
+    ["Referrer-Policy", "strict-origin-when-cross-origin"],
+    ["Permissions-Policy", "camera=(), microphone=(), geolocation=()"],
+    ["Cross-Origin-Opener-Policy", "same-origin"],
+    ["Cross-Origin-Resource-Policy", "same-origin"],
+    ["Cross-Origin-Embedder-Policy", "require-corp"],
+  ];
+  let currentReport = null;
+  let toastTimer = null;
+  const SAFE_REFERRER_POLICIES = new Set([
+    "no-referrer",
+    "same-origin",
+    "strict-origin",
+    "strict-origin-when-cross-origin",
+  ]);
+
+  function quality(name, value) {
+    const lowered = value.toLowerCase();
+    if (name === "strict-transport-security") {
+      const match = lowered.match(/(?:^|;)\s*max-age\s*=\s*(\d+)/);
+      if (!match) return { status: "warning", issue: "Incluye una directiva max-age válida." };
+      if (Number(match[1]) < 31536000) {
+        return { status: "warning", issue: "El max-age es inferior al año recomendado." };
+      }
+    } else if (name === "content-security-policy") {
+      const risky = ["'unsafe-inline'", "'unsafe-eval'"].filter((token) => lowered.includes(token));
+      if (/(?:^|[;\s])\*(?:[;\s]|$)/.test(lowered)) risky.push("*");
+      if (risky.length) {
+        return { status: "warning", issue: `Revisa fuentes permisivas: ${risky.join(", ")}.` };
+      }
+      if (!lowered.includes("default-src") && !lowered.includes("script-src")) {
+        return { status: "warning", issue: "Define al menos default-src o script-src." };
+      }
+    } else if (name === "x-content-type-options" && lowered !== "nosniff") {
+      return { status: "warning", issue: "El único valor recomendado es nosniff." };
+    } else if (name === "x-frame-options" && !["deny", "sameorigin"].includes(lowered)) {
+      return { status: "warning", issue: "Usa DENY o SAMEORIGIN." };
+    } else if (name === "referrer-policy") {
+      const policies = lowered.split(",").map((item) => item.trim());
+      if (!policies.some((item) => SAFE_REFERRER_POLICIES.has(item))) {
+        return {
+          status: "warning",
+          issue: "Usa una política restrictiva como strict-origin-when-cross-origin.",
+        };
+      }
+    } else if (name === "permissions-policy" && lowered.includes("*")) {
+      return {
+        status: "warning",
+        issue: "Evita permitir capacidades sensibles a todos los orígenes (*).",
+      };
+    } else if (
+      name === "cross-origin-opener-policy"
+      && !["same-origin", "same-origin-allow-popups"].includes(lowered)
+    ) {
+      return { status: "warning", issue: "Valora same-origin para un aislamiento fuerte." };
+    } else if (
+      name === "cross-origin-resource-policy"
+      && !["same-origin", "same-site"].includes(lowered)
+    ) {
+      return {
+        status: "warning",
+        issue: "Usa same-origin o same-site cuando sea compatible.",
+      };
+    } else if (
+      name === "cross-origin-embedder-policy"
+      && !["require-corp", "credentialless"].includes(lowered)
+    ) {
+      return {
+        status: "warning",
+        issue: "Usa require-corp o credentialless cuando sea compatible.",
+      };
+    }
+    return { status: "secure", issue: null };
+  }
+
+  function normalizeHeaders(headers) {
+    const normalized = Object.create(null);
+    for (const [rawName, rawValue] of Object.entries(headers)) {
+      const name = rawName.trim().toLowerCase();
+      const value = rawValue.trim();
+      if (name && !/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(name + value)) {
+        normalized[name] = value;
+      }
+    }
+    return normalized;
+  }
+
+  function analyzeCookies(headers) {
+    const rawCookies = [];
+    for (const [rawName, rawValue] of Object.entries(headers)) {
+      if (rawName.trim().toLowerCase() === "set-cookie") {
+        rawCookies.push(...rawValue.split("\n").map((line) => line.trim()).filter(Boolean));
+      }
+    }
+
+    const cookies = [];
+    for (const rawCookie of rawCookies) {
+      const parts = rawCookie.split(";").map((part) => part.trim()).filter(Boolean);
+      if (!parts.length || !parts[0].includes("=")) continue;
+      const name = parts[0].split("=", 1)[0].trim().slice(0, 128) || "(sin nombre)";
+      const attributes = Object.create(null);
+      for (const part of parts.slice(1)) {
+        const separator = part.indexOf("=");
+        const key = (separator === -1 ? part : part.slice(0, separator)).trim().toLowerCase();
+        attributes[key] = separator === -1 ? null : part.slice(separator + 1).trim().toLowerCase();
+      }
+      const secure = Object.hasOwn(attributes, "secure");
+      const httpOnly = Object.hasOwn(attributes, "httponly");
+      const sameSite = attributes.samesite ?? null;
+      const issues = [];
+      if (!secure) issues.push("Falta Secure");
+      if (!httpOnly) issues.push("Falta HttpOnly; confirma si JavaScript necesita acceder a ella");
+      if (!["lax", "strict", "none"].includes(sameSite)) {
+        issues.push("Falta un atributo SameSite explícito");
+      }
+      if (sameSite === "none" && !secure) issues.push("SameSite=None requiere Secure");
+      const lowerName = name.toLowerCase();
+      if (lowerName.startsWith("__secure-") && !secure) {
+        issues.push("El prefijo __Secure- requiere Secure");
+      }
+      if (
+        lowerName.startsWith("__host-")
+        && (!secure || attributes.path !== "/" || Object.hasOwn(attributes, "domain"))
+      ) {
+        issues.push("El prefijo __Host- requiere Secure, Path=/ y ningún Domain");
+      }
+      cookies.push({
+        name,
+        status: issues.length ? "warning" : "secure",
+        secure,
+        http_only: httpOnly,
+        same_site: sameSite,
+        issues,
+      });
+    }
+    return {
+      count: cookies.length,
+      secure: cookies.filter((cookie) => cookie.status === "secure").length,
+      warnings: cookies.filter((cookie) => cookie.status === "warning").length,
+      reference: COOKIE_REFERENCE,
+      cookies,
+    };
+  }
+
+  function analyzeHeaders(headers) {
+    const normalized = normalizeHeaders(headers);
+    const results = [];
+    let score = 0;
+    for (const rule of RULES) {
+      const value = normalized[rule.name];
+      const present = Boolean(value);
+      const signal = present ? quality(rule.name, value) : { status: "missing", issue: null };
+      const earned = signal.status === "secure"
+        ? rule.weight
+        : present
+          ? Math.max(0, rule.weight - 5)
+          : 0;
+      score += earned;
+      results.push({
+        name: rule.name,
+        present,
+        value: value ?? null,
+        purpose: rule.purpose,
+        recommendation: rule.recommendation,
+        weight: rule.weight,
+        earned,
+        status: signal.status,
+        issue: signal.issue,
+        reference: rule.reference,
+      });
+    }
+    const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 55 ? "C" : score >= 35 ? "D" : "F";
+    const priorities = results
+      .filter((item) => item.status !== "secure")
+      .slice(0, 3)
+      .map((item) => ({
+        name: item.name,
+        status: item.status,
+        message: item.issue || item.recommendation,
+      }));
+    return {
+      score,
+      grade,
+      present: results.filter((item) => item.present).length,
+      secure: results.filter((item) => item.status === "secure").length,
+      warnings: results.filter((item) => item.status === "warning").length,
+      missing: results.filter((item) => item.status === "missing").length,
+      total: results.length,
+      priorities,
+      results,
+      cookies: analyzeCookies(headers),
+    };
+  }
+
+  function parseRawHeaders(raw) {
+    if (new TextEncoder().encode(raw).length > 32768) {
+      throw new Error("El bloque de cabeceras supera el límite de 32 KB.");
+    }
+    const headers = Object.create(null);
+    const lines = raw.replaceAll("\r\n", "\n").split("\n");
+    if (lines.length && lines[0].toUpperCase().startsWith("HTTP/")) lines.shift();
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      if (/^\s/.test(line)) {
+        throw new Error("No se admiten cabeceras continuadas en varias líneas.");
+      }
+      const separator = line.indexOf(":");
+      if (separator === -1) {
+        throw new Error(`Línea de cabecera no válida: ${line.slice(0, 80)}`);
+      }
+      const name = line.slice(0, separator).trim();
+      const value = line.slice(separator + 1).trim();
+      if (!name || /\s/.test(name)) throw new Error("Nombre de cabecera no válido.");
+      if (name.toLowerCase() === "set-cookie") {
+        const existing = Object.keys(headers).find((key) => key.toLowerCase() === "set-cookie");
+        if (existing) headers[existing] = `${headers[existing]}\n${value}`;
+        else headers[name] = value;
+      } else {
+        headers[name] = value;
+      }
+    }
+    if (!Object.keys(headers).length) {
+      throw new Error("Pega al menos una cabecera con el formato Nombre: valor.");
+    }
+    return headers;
+  }
+
+  function safeStorage(action, fallback = null) {
+    try {
+      return action();
+    } catch {
+      return fallback;
+    }
+  }
+
+  function getHistory() {
+    return safeStorage(() => {
+      const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      if (!Array.isArray(parsed)) return [];
+      const validGrades = new Set(["A", "B", "C", "D", "F"]);
+      return parsed
+        .filter((item) => (
+          item
+          && typeof item === "object"
+          && typeof item.date === "string"
+          && Number.isFinite(Date.parse(item.date))
+          && Number.isInteger(item.score)
+          && item.score >= 0
+          && item.score <= 100
+          && validGrades.has(item.grade)
+          && [item.secure, item.warnings, item.missing].every(
+            (value) => Number.isInteger(value) && value >= 0 && value <= RULES.length,
+          )
+        ))
+        .slice(0, 6)
+        .map((item) => ({
+          date: item.date,
+          score: item.score,
+          grade: item.grade,
+          secure: item.secure,
+          warnings: item.warnings,
+          missing: item.missing,
+        }));
+    }, []);
+  }
+
+  function saveHistory(analysis) {
+    const entry = {
+      date: new Date().toISOString(),
+      score: analysis.score,
+      grade: analysis.grade,
+      secure: analysis.secure,
+      warnings: analysis.warnings,
+      missing: analysis.missing,
+    };
+    const history = [entry, ...getHistory()].slice(0, 6);
+    safeStorage(() => localStorage.setItem(HISTORY_KEY, JSON.stringify(history)));
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    })[character]);
+  }
+
+  function configurationFor(server) {
+    if (server === "nginx") {
+      return SECURITY_PROFILE.map(([name, value]) => `add_header ${name} "${value}" always;`).join("\n");
+    }
+    if (server === "apache") {
+      return [
+        "<IfModule mod_headers.c>",
+        ...SECURITY_PROFILE.map(([name, value]) => `  Header always set ${name} "${value}"`),
+        "</IfModule>",
+      ].join("\n");
+    }
+    if (server === "fastapi") {
+      const entries = SECURITY_PROFILE.map(
+        ([name, value]) => `    ${JSON.stringify(name)}: ${JSON.stringify(value)},`,
+      ).join("\n");
+      return `SECURITY_HEADERS = {\n${entries}\n}\n\n@app.middleware("http")\nasync def security_headers(request, call_next):\n    response = await call_next(request)\n    for name, value in SECURITY_HEADERS.items():\n        response.headers.setdefault(name, value)\n    return response`;
+    }
+    const calls = SECURITY_PROFILE.map(
+      ([name, value]) => `  res.setHeader(${JSON.stringify(name)}, ${JSON.stringify(value)});`,
+    ).join("\n");
+    return `app.use((req, res, next) => {\n${calls}\n  next();\n});`;
+  }
+
+  function exportableReport(report = currentReport) {
+    if (!report) return null;
+    return {
+      generator: "HeaderGuard Lite by abyssnx",
+      generated_at: new Date().toISOString(),
+      source: "Cabeceras pegadas · análisis local",
+      analysis: report.analysis,
+    };
+  }
+
+  function reportHTML(report) {
+    const rows = report.analysis.results.map((item) => `
+      <tr><td>${escapeHTML(item.name)}</td><td><span class="state ${escapeHTML(item.status)}">${escapeHTML(item.status)}</span></td><td>${escapeHTML(item.value || "No detectada")}</td><td>${escapeHTML(item.issue || item.recommendation)}</td></tr>`).join("");
+    const cookies = report.analysis.cookies.cookies.length
+      ? `<h2>Cookies</h2><p>Los valores se eliminaron antes de crear el informe.</p><table><thead><tr><th>Nombre</th><th>Estado</th><th>Atributos</th></tr></thead><tbody>${report.analysis.cookies.cookies.map((cookie) => `<tr><td>${escapeHTML(cookie.name)}</td><td>${escapeHTML(cookie.status)}</td><td>Secure: ${cookie.secure ? "sí" : "no"} · HttpOnly: ${cookie.http_only ? "sí" : "no"} · SameSite: ${escapeHTML(cookie.same_site || "no definido")}</td></tr>`).join("")}</tbody></table>`
+      : "";
+    return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe HeaderGuard Lite</title><style>body{font:15px/1.55 system-ui;background:#07101f;color:#eef7ff;margin:0;padding:40px}main{max-width:1050px;margin:auto}.brand{color:#40e7d0;letter-spacing:.12em;text-transform:uppercase}.score{font-size:54px;margin:8px 0;color:#60e6ad}table{width:100%;border-collapse:collapse;margin:24px 0 40px}th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid #263653}th{color:#91a4bf}.state{padding:3px 8px;border-radius:99px;background:#1c2b43}.warning,.missing{color:#ffc56b}.secure{color:#60e6ad}footer{margin-top:50px;color:#91a4bf}@media print{body{background:#fff;color:#172033}.brand,.score{color:#087d91}}</style></head><body><main><p class="brand">HeaderGuard Lite · abyssnx</p><h1>Informe de seguridad HTTP</h1><p>${escapeHTML(report.source)} · ${escapeHTML(report.generated_at)}</p><div class="score">${report.analysis.score}/100 · ${escapeHTML(report.analysis.grade)}</div><p>${report.analysis.secure} correctas · ${report.analysis.warnings} mejorables · ${report.analysis.missing} ausentes</p><h2>Cabeceras evaluadas</h2><table><thead><tr><th>Cabecera</th><th>Estado</th><th>Valor</th><th>Recomendación</th></tr></thead><tbody>${rows}</tbody></table>${cookies}<footer>Generado localmente con HeaderGuard Lite by abyssnx · Este informe no sustituye una auditoría profesional.</footer></main></body></html>`;
+  }
+
+  function makeElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  function makeReference(label, href) {
+    const link = makeElement("a", "reference-link", `${label} ↗`);
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    return link;
+  }
+
+  function showToast(message) {
+    const toast = document.querySelector("#toast");
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add("visible");
+    toastTimer = setTimeout(() => toast.classList.remove("visible"), 2400);
+  }
+
+  function renderHistory() {
+    const list = document.querySelector("#history-list");
+    const history = getHistory();
+    list.replaceChildren();
+    if (!history.length) {
+      list.append(makeElement("p", "empty-history", "Todavía no hay análisis guardados."));
+      return;
+    }
+    const formatter = new Intl.DateTimeFormat("es-ES", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    for (const item of history) {
+      const row = makeElement("article", "history-item");
+      const copy = makeElement("div");
+      copy.append(
+        makeElement("strong", "", `Nota ${item.grade}`),
+        makeElement("span", "", formatter.format(new Date(item.date))),
+      );
+      row.append(copy, makeElement("div", "history-score", String(item.score)));
+      list.append(row);
+    }
+  }
+
+  function updateConfiguration() {
+    const output = document.querySelector("#config-output");
+    output.textContent = configurationFor(document.querySelector("#server-type").value);
+  }
+
+  function downloadBlob(content, type, filename) {
+    const blob = new Blob([content], { type });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  async function copyText(value, successMessage) {
+    try {
+      await navigator.clipboard.writeText(value);
+      showToast(successMessage);
+    } catch {
+      showToast("No se pudo copiar automáticamente. Selecciona el texto manualmente.");
+    }
+  }
+
+  function renderCookies(cookieAnalysis) {
+    const panel = document.querySelector("#cookie-results");
+    const list = document.querySelector("#cookie-list");
+    list.replaceChildren();
+    if (!cookieAnalysis.count) {
+      panel.classList.add("hidden");
+      return;
+    }
+    panel.classList.remove("hidden");
+    document.querySelector("#cookie-summary").textContent = `${cookieAnalysis.secure} seguras · ${cookieAnalysis.warnings} a revisar · valores ocultos`;
+    for (const cookie of cookieAnalysis.cookies) {
+      const row = makeElement("article", `cookie-item ${cookie.status}`);
+      const head = makeElement("div", "cookie-head");
+      head.append(
+        makeElement("strong", "", cookie.name),
+        makeElement(
+          "span",
+          `cookie-status ${cookie.status}`,
+          cookie.status === "secure" ? "Correcta" : "Revisar",
+        ),
+      );
+      const attributes = makeElement("div", "cookie-attributes");
+      attributes.append(
+        makeElement("span", cookie.secure ? "active" : "", "Secure"),
+        makeElement("span", cookie.http_only ? "active" : "", "HttpOnly"),
+        makeElement("span", cookie.same_site ? "active" : "", `SameSite=${cookie.same_site || "—"}`),
+      );
+      row.append(head, attributes);
+      if (cookie.issues.length) row.append(makeElement("p", "cookie-issues", cookie.issues.join(" · ")));
+      list.append(row);
+    }
+    const guide = makeReference("Guía oficial de cookies", cookieAnalysis.reference);
+    guide.classList.add("cookie-reference");
+    list.append(guide);
+  }
+
+  function renderResults(report) {
+    currentReport = report;
+    const analysis = report.analysis;
+    document.querySelector("#score").textContent = analysis.score;
+    document.querySelector("#grade").textContent = analysis.grade;
+    document.querySelector("#summary").textContent = `${analysis.present} de ${analysis.total} presentes`;
+    document.querySelector("#secure-count").textContent = analysis.secure;
+    document.querySelector("#warning-count").textContent = analysis.warnings;
+    document.querySelector("#missing-count").textContent = analysis.missing;
+    document.querySelector("#score-ring").style.setProperty("--score-angle", `${analysis.score * 3.6}deg`);
+
+    const priorities = document.querySelector("#priority-list");
+    priorities.replaceChildren();
+    if (!analysis.priorities.length) {
+      priorities.append(makeElement("p", "priority-empty", "✓ No hay acciones urgentes en estas nueve comprobaciones."));
+    } else {
+      for (const priority of analysis.priorities) {
+        const card = makeElement("article", "priority-item");
+        card.append(
+          makeElement("strong", "", priority.name),
+          makeElement("p", "", priority.message),
+        );
+        priorities.append(card);
+      }
+    }
+
+    const icons = { secure: "✓", warning: "!", missing: "×" };
+    const headers = document.querySelector("#header-list");
+    headers.replaceChildren();
+    for (const item of analysis.results) {
+      const row = makeElement("article", `header-item ${item.status}`);
+      row.append(makeElement("span", "state-icon", icons[item.status]));
+      const identity = makeElement("div", "header-identity");
+      identity.append(
+        makeElement("div", "header-name", item.name),
+        makeElement("div", "header-value", item.present ? item.value : "No detectada"),
+      );
+      const detail = makeElement("div", "header-detail");
+      detail.append(makeElement("p", "", item.purpose));
+      const guidance = item.status === "secure"
+        ? `Configuración sólida · ${item.earned}/${item.weight} puntos.`
+        : item.status === "warning"
+          ? `${item.issue} · ${item.earned}/${item.weight} puntos.`
+          : `Recomendación: ${item.recommendation}`;
+      detail.append(makeElement("small", "", guidance));
+      const references = makeElement("div", "reference-links");
+      references.append(
+        makeReference("MDN", item.reference),
+        makeReference("OWASP", OWASP_REFERENCE),
+      );
+      detail.append(references);
+      row.append(identity, detail);
+      headers.append(row);
+    }
+    renderCookies(analysis.cookies);
+    updateConfiguration();
+    saveHistory(analysis);
+    renderHistory();
+    const results = document.querySelector("#results");
+    results.classList.remove("hidden");
+    results.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyTheme(theme) {
+    const selected = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = selected;
+    document.querySelector(".theme-icon").textContent = selected === "dark" ? "☼" : "☾";
+    document.querySelector("#theme-toggle").setAttribute(
+      "aria-label",
+      selected === "dark" ? "Activar tema claro" : "Activar tema oscuro",
+    );
+    safeStorage(() => localStorage.setItem(THEME_KEY, selected));
+  }
+
+  function initializeInterface() {
+    const storedTheme = safeStorage(() => localStorage.getItem(THEME_KEY));
+    const preferredTheme = globalThis.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    applyTheme(storedTheme || preferredTheme);
+
+    document.querySelector("#theme-toggle").addEventListener("click", () => {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    });
+    document.querySelector("#sample-button").addEventListener("click", () => {
+      document.querySelector("#headers").value = [
+        "HTTP/2 200",
+        "content-security-policy: default-src 'self'; object-src 'none'",
+        "strict-transport-security: max-age=31536000; includeSubDomains",
+        "x-content-type-options: nosniff",
+        "x-frame-options: DENY",
+        "referrer-policy: strict-origin-when-cross-origin",
+        "set-cookie: __Host-session=demo-value; Secure; HttpOnly; SameSite=Lax; Path=/",
+      ].join("\n");
+      const status = document.querySelector("#status");
+      status.className = "status success";
+      status.textContent = "Ejemplo cargado. Pulsa Analizar ahora.";
+    });
+    document.querySelector("#analyze-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const status = document.querySelector("#status");
+      try {
+        const headers = parseRawHeaders(document.querySelector("#headers").value);
+        renderResults({ source: "pasted", analysis: analyzeHeaders(headers) });
+        status.className = "status success";
+        status.textContent = "Análisis completado en este dispositivo.";
+      } catch (error) {
+        status.className = "status";
+        status.textContent = error.message;
+      }
+    });
+    document.querySelector("#server-type").addEventListener("change", updateConfiguration);
+    document.querySelector("#copy-config").addEventListener("click", () => {
+      copyText(document.querySelector("#config-output").textContent, "Configuración copiada");
+    });
+    document.querySelector("#download-json").addEventListener("click", () => {
+      const report = exportableReport();
+      if (!report) return;
+      downloadBlob(
+        JSON.stringify(report, null, 2),
+        "application/json;charset=utf-8",
+        `headerguard-lite-${report.analysis.score}.json`,
+      );
+      showToast("Informe JSON descargado");
+    });
+    document.querySelector("#download-html").addEventListener("click", () => {
+      const report = exportableReport();
+      if (!report) return;
+      downloadBlob(
+        reportHTML(report),
+        "text/html;charset=utf-8",
+        `headerguard-lite-${report.analysis.score}.html`,
+      );
+      showToast("Informe HTML descargado");
+    });
+    document.querySelector("#copy-summary").addEventListener("click", () => {
+      if (!currentReport) return;
+      const analysis = currentReport.analysis;
+      copyText(
+        `HeaderGuard Lite: ${analysis.score}/100 (${analysis.grade}) · ${analysis.secure} correctas · ${analysis.warnings} mejorables · ${analysis.missing} ausentes.`,
+        "Resumen copiado",
+      );
+    });
+    document.querySelector("#copy-badge").addEventListener("click", () => {
+      if (!currentReport) return;
+      const analysis = currentReport.analysis;
+      const color = analysis.score >= 90 ? "2ea44f" : analysis.score >= 55 ? "e3a008" : "d73a49";
+      copyText(
+        `![HeaderGuard](https://img.shields.io/badge/HeaderGuard-${analysis.score}%2F100-${color})`,
+        "Badge copiado",
+      );
+    });
+    document.querySelector("#print-report").addEventListener("click", () => globalThis.print());
+    renderHistory();
+    updateConfiguration();
+  }
+
+  if (typeof document !== "undefined") initializeInterface();
+
+  globalThis.HeaderGuardLite = Object.freeze({
+    rules: RULES,
+    parseRawHeaders,
+    quality,
+    analyzeCookies,
+    analyzeHeaders,
+    renderResults,
+    renderCookies,
+    applyTheme,
+    configurationFor,
+    exportableReport,
+    reportHTML,
+    getHistory,
+    saveHistory,
+  });
+})();
+</script>
+</body>
+</html>

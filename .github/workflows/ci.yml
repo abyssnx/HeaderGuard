@@ -20,7 +20,12 @@ jobs:
       - name: Install
         run: python -m pip install -e ".[dev]"
       - name: Lint
-        run: ruff check .
+        run: |
+          ruff check .
+          node --check standalone/lite.js
+          node --check app/static/app.js
+      - name: Verify standalone artifact
+        run: python scripts/build_standalone.py --check
       - name: Tests
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=80
 
@@ -39,7 +44,7 @@ jobs:
       - name: Browser tests
         env:
           HEADERGUARD_SCREENSHOT_DIR: artifacts
-        run: pytest tests/test_ui.py
+        run: pytest tests/test_ui.py tests/test_lite_ui.py
       - name: Upload interface captures
         if: always()
         uses: actions/upload-artifact@v4

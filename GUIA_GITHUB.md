@@ -29,7 +29,7 @@ Esta es la opción más sencilla si no quieres utilizar Git:
 3. Pulsa **Add file → Upload files**.
 4. Arrastra **el contenido interior** de la carpeta `HeaderGuard`, no la carpeta completa.
 5. Comprueba que `README.md`, `app`, `tests` y `.github` aparecen en la raíz.
-6. Escribe `feat: publica HeaderGuard v1.2.0` como mensaje y confirma la subida.
+6. Escribe `feat: publica HeaderGuard v1.3.0` como mensaje y confirma la subida.
 
 GitHub puede ocultar la carpeta `.github` en algunos selectores de Windows porque empieza por punto. Si no se carga al arrastrar, usa los comandos de la siguiente sección o súbela por separado.
 
@@ -40,7 +40,7 @@ Ejecuta estos comandos dentro de la carpeta `I:\Codex\HeaderGuard`:
 ```powershell
 git init
 git add .
-git commit -m "feat: publica HeaderGuard v1.2.0"
+git commit -m "feat: publica HeaderGuard v1.3.0"
 git branch -M main
 git remote add origin https://github.com/abyssnx/HeaderGuard.git
 git push -u origin main
@@ -69,8 +69,8 @@ Después del primer `push`:
 Cuando la acción de CI haya terminado correctamente:
 
 1. Abre **Releases → Draft a new release**.
-2. Crea la etiqueta `v1.2.0`.
-3. Usa como título `HeaderGuard v1.2.0`.
+2. Crea la etiqueta `v1.3.0`.
+3. Usa como título `HeaderGuard v1.3.0`.
 4. Copia las novedades de `CHANGELOG.md`.
 5. Adjunta `HeaderGuard.zip` si quieres ofrecer una descarga directa.
 
@@ -78,7 +78,7 @@ Cuando la acción de CI haya terminado correctamente:
 
 ### Resumen corto
 
-HeaderGuard es una herramienta educativa que revisa nueve cabeceras HTTP de seguridad, detecta configuraciones débiles y produce una puntuación acompañada de recomendaciones. Puede analizar una URL pública mediante un backend FastAPI protegido frente a SSRF o trabajar sin red con cabeceras pegadas manualmente.
+HeaderGuard es una herramienta educativa que revisa nueve cabeceras HTTP de seguridad, detecta configuraciones débiles y produce una puntuación acompañada de recomendaciones. La edición Lite funciona con doble clic y sin instalación; la edición completa puede analizar una URL pública mediante FastAPI con protección SSRF.
 
 ### Problema que resuelve
 
@@ -111,12 +111,12 @@ flowchart LR
 
 Para enseñarlo en una entrevista, vídeo o publicación:
 
-1. Abre el modo **Pegar cabeceras** y pulsa **Cargar ejemplo**.
-2. Ejecuta el análisis y enseña la puntuación y las prioridades.
-3. Cambia una política segura por otra débil para mostrar las advertencias.
-4. Enseña la comparación con el análisis anterior.
+1. Abre `HeaderGuard-Lite.html` con doble clic para demostrar que no requiere instalación.
+2. Pulsa **Cargar ejemplo**.
+3. Ejecuta el análisis y enseña la puntuación y las prioridades.
+4. Cambia una política segura por otra débil para mostrar las advertencias.
 5. Exporta el JSON o copia el badge para demostrar que el informe se puede reutilizar.
-6. Explica la protección SSRF usando el diagrama anterior.
+6. Arranca la edición completa y explica la protección SSRF usando el diagrama anterior.
 
 ## 9. Qué no debes prometer
 
