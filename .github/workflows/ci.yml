@@ -47,7 +47,7 @@ jobs:
         run: pytest tests/test_ui.py tests/test_lite_ui.py
       - name: Upload interface captures
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: headerguard-interface
           path: artifacts/
