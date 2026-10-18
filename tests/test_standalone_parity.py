@@ -148,12 +148,12 @@ def test_lite_generates_configuration_for_supported_servers(server: str, fragmen
 
 
 def test_lite_reports_escape_html_and_never_export_cookie_values() -> None:
-    secret = "cookie-secret-never-export"
+    cookie_value = "cookie-secret-never-export"
     analyzed = run_lite(
         "\n".join(
             (
                 "Content-Security-Policy: default-src 'self'; report-uri <script>alert(1)</script>",
-                f"Set-Cookie: session={secret}; Secure; HttpOnly; SameSite=Lax",
+                f"Set-Cookie: session={cookie_value}; Secure; HttpOnly; SameSite=Lax",
             )
         )
     )["result"]
@@ -163,11 +163,11 @@ def test_lite_reports_escape_html_and_never_export_cookie_values() -> None:
 
     assert exported["ok"] is True
     assert exported["result"]["generator"] == "HeaderGuard Lite by abyssnx"
-    assert secret not in json.dumps(exported, ensure_ascii=False)
+    assert cookie_value not in json.dumps(exported, ensure_ascii=False)
     assert html["ok"] is True
     assert "<script>alert(1)</script>" not in html["result"]
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html["result"]
-    assert secret not in html["result"]
+    assert cookie_value not in html["result"]
 
 
 def test_lite_history_keeps_only_six_private_summaries() -> None:

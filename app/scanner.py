@@ -11,7 +11,7 @@ from urllib.parse import quote, urljoin, urlsplit, urlunsplit
 ALLOWED_PORTS = {80, 443}
 MAX_REDIRECTS = 4
 MAX_RESPONSE_BYTES = 65_536
-USER_AGENT = "HeaderGuard/1.2 (+security-header-auditor)"
+USER_AGENT = "HeaderGuard/1.3 (+security-header-auditor)"
 
 
 class ScanError(ValueError):

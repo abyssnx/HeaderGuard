@@ -2,6 +2,28 @@
 
 Todos los cambios relevantes de HeaderGuard se documentan aquí. El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto utiliza versionado semántico.
 
+## [1.3.0] - 2026-10-18
+
+### Añadido
+
+- `HeaderGuard-Lite.html`, una edición autónoma que funciona con doble clic, sin instalación ni conexión.
+- Analizador JavaScript con paridad automatizada frente al motor Python.
+- Historial privado, generador de configuración y exportaciones JSON/HTML en la edición Lite.
+- Capturas y pruebas reales de escritorio y móvil mediante `file://`.
+- Guía comparativa para elegir, instalar y usar cada edición.
+
+### Mejorado
+
+- Docker se presenta como alternativa opcional; la instalación directa con Python queda explicada paso a paso.
+- GitHub Actions comprueba que el HTML autónomo esté actualizado y ejecuta ambas interfaces con Chromium.
+- Estructura pública de documentación simplificada y orientada a usuarios del proyecto.
+
+### Seguridad
+
+- Política CSP con hashes SHA-256 y `connect-src 'none'` en la edición Lite.
+- Ningún valor de cookie se muestra, conserva o exporta.
+- La edición Lite no incorpora escaneo remoto ni dependencias externas.
+
 ## [1.2.0] - 2026-10-18
 
 ### Añadido

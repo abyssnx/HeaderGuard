@@ -53,7 +53,7 @@ class SecurityHeadersMiddleware:
 
 app = FastAPI(
     title="HeaderGuard API",
-    version="1.2.0",
+    version="1.3.0",
     description="Analizador educativo de cabeceras HTTP de seguridad.",
     docs_url="/api/docs",
     redoc_url=None,

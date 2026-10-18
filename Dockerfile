@@ -2,7 +2,7 @@ FROM python:3.12-slim AS runtime
 
 LABEL org.opencontainers.image.title="HeaderGuard" \
       org.opencontainers.image.description="Analizador educativo de cabeceras HTTP de seguridad" \
-      org.opencontainers.image.version="1.2.0" \
+      org.opencontainers.image.version="1.3.0" \
       org.opencontainers.image.authors="abyssnx" \
       org.opencontainers.image.licenses="MIT"
 
