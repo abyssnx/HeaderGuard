@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JGrYYe5sJXIMIzESNbKqLY2FafakytLZIyBo4uRr5VE='; style-src 'sha256-+zgRcenDG4NbeS1InucsdiR9UkwgRY1KtdvFmLHWPR8='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark light">
+  <title>HeaderGuard Lite · abyssnx</title>
+  <style>:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #07101f;
+  color: #edf6ff;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(72rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 4rem 0;
+}
+
+.brand {
+  color: #43e6d2;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+  <main>
+    <p class="brand">HeaderGuard Lite</p>
+    <h1>Análisis local de cabeceras HTTP</h1>
+    <p>La edición sin instalación de HeaderGuard, creada por abyssnx.</p>
+  </main>
+  <script>(() => {
+  "use strict";
+
+  const RULES = [{"name":"strict-transport-security","purpose":"Obliga al navegador a usar HTTPS y reduce ataques de downgrade.","recommendation":"max-age=31536000; includeSubDomains (añade preload solo tras comprobar requisitos).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security","weight":20},{"name":"content-security-policy","purpose":"Limita los orígenes desde los que se puede cargar contenido y mitiga XSS.","recommendation":"Empieza con default-src 'self' y ajusta cada directiva a los recursos necesarios.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy","weight":25},{"name":"x-content-type-options","purpose":"Evita que el navegador adivine tipos MIME.","recommendation":"nosniff","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options","weight":10},{"name":"x-frame-options","purpose":"Reduce el riesgo de clickjacking en navegadores antiguos.","recommendation":"DENY o SAMEORIGIN; prioriza también frame-ancestors en CSP.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options","weight":10},{"name":"referrer-policy","purpose":"Controla cuánta información de navegación se envía a otros sitios.","recommendation":"strict-origin-when-cross-origin","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy","weight":10},{"name":"permissions-policy","purpose":"Restringe APIs sensibles del navegador, como cámara o geolocalización.","recommendation":"Desactiva lo que no uses, por ejemplo: camera=(), microphone=(), geolocation=().","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy","weight":10},{"name":"cross-origin-opener-policy","purpose":"Aísla el contexto de navegación frente a ventanas de otros orígenes.","recommendation":"same-origin (comprueba antes integraciones con ventanas externas).","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy","weight":5},{"name":"cross-origin-resource-policy","purpose":"Limita qué otros orígenes pueden cargar los recursos de la respuesta.","recommendation":"same-origin o same-site según el caso de uso.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Resource-Policy","weight":5},{"name":"cross-origin-embedder-policy","purpose":"Exige recursos compatibles con aislamiento de origen cruzado.","recommendation":"require-corp solo si todos los recursos externos son compatibles.","reference":"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy","weight":5}];
+
+  globalThis.HeaderGuardLite = Object.freeze({ rules: RULES });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #07101f;
+  color: #edf6ff;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  width: min(72rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 4rem 0;
+}
+
+.brand {
+  color: #43e6d2;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
