@@ -1,0 +1,5 @@
+HeaderGuard-Lite.html text eol=lf
+standalone/*.html text eol=lf
+standalone/*.css text eol=lf
+standalone/*.js text eol=lf
+scripts/build_standalone.py text eol=lf
