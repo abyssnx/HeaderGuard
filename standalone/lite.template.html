@@ -76,6 +76,30 @@
           <div class="panel-heading compact"><div><span class="step">05</span><h2 id="cookies-title">Cookies detectadas</h2></div><span id="cookie-summary">Valores eliminados por privacidad</span></div>
           <div id="cookie-list" class="cookie-list"></div>
         </section>
+        <div class="tools-grid">
+          <section class="tool-card panel" aria-labelledby="config-title">
+            <div class="tool-heading"><div><span class="step">06</span><h2 id="config-title">Configuración recomendada</h2></div>
+              <select id="server-type" aria-label="Tipo de servidor"><option value="nginx">Nginx</option><option value="apache">Apache</option><option value="fastapi">FastAPI</option><option value="express">Express</option></select>
+            </div>
+            <pre id="config-output" tabindex="0"></pre>
+            <button id="copy-config" class="button ghost full" type="button">Copiar configuración</button>
+          </section>
+          <section class="tool-card panel" aria-labelledby="export-title">
+            <div class="tool-heading"><div><span class="step">07</span><h2 id="export-title">Exportar y compartir</h2></div></div>
+            <p class="tool-copy">Guarda el informe sin exponer valores de cookies ni el bloque original.</p>
+            <div class="export-grid">
+              <button id="download-json" class="export-button" type="button"><strong>JSON</strong><span>Datos estructurados</span></button>
+              <button id="download-html" class="export-button" type="button"><strong>HTML</strong><span>Informe visual</span></button>
+              <button id="copy-summary" class="export-button" type="button"><strong>Resumen</strong><span>Texto breve</span></button>
+              <button id="copy-badge" class="export-button" type="button"><strong>Badge</strong><span>Para GitHub</span></button>
+            </div>
+            <button id="print-report" class="button ghost full" type="button">Imprimir o guardar como PDF</button>
+          </section>
+        </div>
+        <section class="history-card panel" aria-labelledby="history-title">
+          <div class="panel-heading compact"><div><span class="step">08</span><h2 id="history-title">Historial privado</h2></div><span>Máximo seis resúmenes en este navegador</span></div>
+          <div id="history-list" class="history-list"></div>
+        </section>
       </section>
     </section>
     <aside id="complete-edition" class="upgrade-card">
@@ -87,6 +111,7 @@
     <p><strong>HeaderGuard Lite</strong> · Herramienta educativa, no sustituye una auditoría profesional.</p>
     <p>Creado por <strong>abyssnx</strong> <span aria-hidden="true">◆</span> v1.3</p>
   </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script>{{SCRIPT}}</script>
 </body>
 </html>

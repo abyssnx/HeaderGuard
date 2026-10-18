@@ -5,6 +5,20 @@
   const COOKIE_REFERENCE = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie";
   const OWASP_REFERENCE = "https://owasp.org/www-project-secure-headers/";
   const THEME_KEY = "headerguard.lite.theme.v1";
+  const HISTORY_KEY = "headerguard.lite.history.v1";
+  const SECURITY_PROFILE = [
+    ["Content-Security-Policy", "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"],
+    ["Strict-Transport-Security", "max-age=31536000; includeSubDomains"],
+    ["X-Content-Type-Options", "nosniff"],
+    ["X-Frame-Options", "DENY"],
+    ["Referrer-Policy", "strict-origin-when-cross-origin"],
+    ["Permissions-Policy", "camera=(), microphone=(), geolocation=()"],
+    ["Cross-Origin-Opener-Policy", "same-origin"],
+    ["Cross-Origin-Resource-Policy", "same-origin"],
+    ["Cross-Origin-Embedder-Policy", "require-corp"],
+  ];
+  let currentReport = null;
+  let toastTimer = null;
   const SAFE_REFERRER_POLICIES = new Set([
     "no-referrer",
     "same-origin",
@@ -231,6 +245,78 @@
     }
   }
 
+  function getHistory() {
+    return safeStorage(() => {
+      const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }, []);
+  }
+
+  function saveHistory(analysis) {
+    const entry = {
+      date: new Date().toISOString(),
+      score: analysis.score,
+      grade: analysis.grade,
+      secure: analysis.secure,
+      warnings: analysis.warnings,
+      missing: analysis.missing,
+    };
+    const history = [entry, ...getHistory()].slice(0, 6);
+    safeStorage(() => localStorage.setItem(HISTORY_KEY, JSON.stringify(history)));
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    })[character]);
+  }
+
+  function configurationFor(server) {
+    if (server === "nginx") {
+      return SECURITY_PROFILE.map(([name, value]) => `add_header ${name} "${value}" always;`).join("\n");
+    }
+    if (server === "apache") {
+      return [
+        "<IfModule mod_headers.c>",
+        ...SECURITY_PROFILE.map(([name, value]) => `  Header always set ${name} "${value}"`),
+        "</IfModule>",
+      ].join("\n");
+    }
+    if (server === "fastapi") {
+      const entries = SECURITY_PROFILE.map(
+        ([name, value]) => `    ${JSON.stringify(name)}: ${JSON.stringify(value)},`,
+      ).join("\n");
+      return `SECURITY_HEADERS = {\n${entries}\n}\n\n@app.middleware("http")\nasync def security_headers(request, call_next):\n    response = await call_next(request)\n    for name, value in SECURITY_HEADERS.items():\n        response.headers.setdefault(name, value)\n    return response`;
+    }
+    const calls = SECURITY_PROFILE.map(
+      ([name, value]) => `  res.setHeader(${JSON.stringify(name)}, ${JSON.stringify(value)});`,
+    ).join("\n");
+    return `app.use((req, res, next) => {\n${calls}\n  next();\n});`;
+  }
+
+  function exportableReport(report = currentReport) {
+    if (!report) return null;
+    return {
+      generator: "HeaderGuard Lite by abyssnx",
+      generated_at: new Date().toISOString(),
+      source: "Cabeceras pegadas · análisis local",
+      analysis: report.analysis,
+    };
+  }
+
+  function reportHTML(report) {
+    const rows = report.analysis.results.map((item) => `
+      <tr><td>${escapeHTML(item.name)}</td><td><span class="state ${escapeHTML(item.status)}">${escapeHTML(item.status)}</span></td><td>${escapeHTML(item.value || "No detectada")}</td><td>${escapeHTML(item.issue || item.recommendation)}</td></tr>`).join("");
+    const cookies = report.analysis.cookies.cookies.length
+      ? `<h2>Cookies</h2><p>Los valores se eliminaron antes de crear el informe.</p><table><thead><tr><th>Nombre</th><th>Estado</th><th>Atributos</th></tr></thead><tbody>${report.analysis.cookies.cookies.map((cookie) => `<tr><td>${escapeHTML(cookie.name)}</td><td>${escapeHTML(cookie.status)}</td><td>Secure: ${cookie.secure ? "sí" : "no"} · HttpOnly: ${cookie.http_only ? "sí" : "no"} · SameSite: ${escapeHTML(cookie.same_site || "no definido")}</td></tr>`).join("")}</tbody></table>`
+      : "";
+    return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Informe HeaderGuard Lite</title><style>body{font:15px/1.55 system-ui;background:#07101f;color:#eef7ff;margin:0;padding:40px}main{max-width:1050px;margin:auto}.brand{color:#40e7d0;letter-spacing:.12em;text-transform:uppercase}.score{font-size:54px;margin:8px 0;color:#60e6ad}table{width:100%;border-collapse:collapse;margin:24px 0 40px}th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid #263653}th{color:#91a4bf}.state{padding:3px 8px;border-radius:99px;background:#1c2b43}.warning,.missing{color:#ffc56b}.secure{color:#60e6ad}footer{margin-top:50px;color:#91a4bf}@media print{body{background:#fff;color:#172033}.brand,.score{color:#087d91}}</style></head><body><main><p class="brand">HeaderGuard Lite · abyssnx</p><h1>Informe de seguridad HTTP</h1><p>${escapeHTML(report.source)} · ${escapeHTML(report.generated_at)}</p><div class="score">${report.analysis.score}/100 · ${escapeHTML(report.analysis.grade)}</div><p>${report.analysis.secure} correctas · ${report.analysis.warnings} mejorables · ${report.analysis.missing} ausentes</p><h2>Cabeceras evaluadas</h2><table><thead><tr><th>Cabecera</th><th>Estado</th><th>Valor</th><th>Recomendación</th></tr></thead><tbody>${rows}</tbody></table>${cookies}<footer>Generado localmente con HeaderGuard Lite by abyssnx · Este informe no sustituye una auditoría profesional.</footer></main></body></html>`;
+  }
+
   function makeElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -244,6 +330,63 @@
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     return link;
+  }
+
+  function showToast(message) {
+    const toast = document.querySelector("#toast");
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add("visible");
+    toastTimer = setTimeout(() => toast.classList.remove("visible"), 2400);
+  }
+
+  function renderHistory() {
+    const list = document.querySelector("#history-list");
+    const history = getHistory();
+    list.replaceChildren();
+    if (!history.length) {
+      list.append(makeElement("p", "empty-history", "Todavía no hay análisis guardados."));
+      return;
+    }
+    const formatter = new Intl.DateTimeFormat("es-ES", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    for (const item of history) {
+      const row = makeElement("article", "history-item");
+      const copy = makeElement("div");
+      copy.append(
+        makeElement("strong", "", `Nota ${item.grade}`),
+        makeElement("span", "", formatter.format(new Date(item.date))),
+      );
+      row.append(copy, makeElement("div", "history-score", String(item.score)));
+      list.append(row);
+    }
+  }
+
+  function updateConfiguration() {
+    const output = document.querySelector("#config-output");
+    output.textContent = configurationFor(document.querySelector("#server-type").value);
+  }
+
+  function downloadBlob(content, type, filename) {
+    const blob = new Blob([content], { type });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  async function copyText(value, successMessage) {
+    try {
+      await navigator.clipboard.writeText(value);
+      showToast(successMessage);
+    } catch {
+      showToast("No se pudo copiar automáticamente. Selecciona el texto manualmente.");
+    }
   }
 
   function renderCookies(cookieAnalysis) {
@@ -283,6 +426,7 @@
   }
 
   function renderResults(report) {
+    currentReport = report;
     const analysis = report.analysis;
     document.querySelector("#score").textContent = analysis.score;
     document.querySelector("#grade").textContent = analysis.grade;
@@ -336,6 +480,9 @@
       headers.append(row);
     }
     renderCookies(analysis.cookies);
+    updateConfiguration();
+    saveHistory(analysis);
+    renderHistory();
     const results = document.querySelector("#results");
     results.classList.remove("hidden");
     results.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -387,6 +534,50 @@
         status.textContent = error.message;
       }
     });
+    document.querySelector("#server-type").addEventListener("change", updateConfiguration);
+    document.querySelector("#copy-config").addEventListener("click", () => {
+      copyText(document.querySelector("#config-output").textContent, "Configuración copiada");
+    });
+    document.querySelector("#download-json").addEventListener("click", () => {
+      const report = exportableReport();
+      if (!report) return;
+      downloadBlob(
+        JSON.stringify(report, null, 2),
+        "application/json;charset=utf-8",
+        `headerguard-lite-${report.analysis.score}.json`,
+      );
+      showToast("Informe JSON descargado");
+    });
+    document.querySelector("#download-html").addEventListener("click", () => {
+      const report = exportableReport();
+      if (!report) return;
+      downloadBlob(
+        reportHTML(report),
+        "text/html;charset=utf-8",
+        `headerguard-lite-${report.analysis.score}.html`,
+      );
+      showToast("Informe HTML descargado");
+    });
+    document.querySelector("#copy-summary").addEventListener("click", () => {
+      if (!currentReport) return;
+      const analysis = currentReport.analysis;
+      copyText(
+        `HeaderGuard Lite: ${analysis.score}/100 (${analysis.grade}) · ${analysis.secure} correctas · ${analysis.warnings} mejorables · ${analysis.missing} ausentes.`,
+        "Resumen copiado",
+      );
+    });
+    document.querySelector("#copy-badge").addEventListener("click", () => {
+      if (!currentReport) return;
+      const analysis = currentReport.analysis;
+      const color = analysis.score >= 90 ? "2ea44f" : analysis.score >= 55 ? "e3a008" : "d73a49";
+      copyText(
+        `![HeaderGuard](https://img.shields.io/badge/HeaderGuard-${analysis.score}%2F100-${color})`,
+        "Badge copiado",
+      );
+    });
+    document.querySelector("#print-report").addEventListener("click", () => globalThis.print());
+    renderHistory();
+    updateConfiguration();
   }
 
   if (typeof document !== "undefined") initializeInterface();
@@ -400,5 +591,10 @@
     renderResults,
     renderCookies,
     applyTheme,
+    configurationFor,
+    exportableReport,
+    reportHTML,
+    getHistory,
+    saveHistory,
   });
 })();

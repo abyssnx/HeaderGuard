@@ -91,6 +91,14 @@ def test_lite_includes_stable_result_regions() -> None:
         "header-list",
         "cookie-list",
         "complete-edition",
+        "server-type",
+        "config-output",
+        "download-json",
+        "download-html",
+        "copy-summary",
+        "copy-badge",
+        "print-report",
+        "history-list",
     ):
         assert element_id in markup.ids
 

@@ -15,17 +15,21 @@ ARTIFACT = ROOT / "HeaderGuard-Lite.html"
 NODE = shutil.which("node")
 
 
-def run_lite(raw: str) -> dict[str, object]:
+def run_node(payload: dict[str, object]) -> dict[str, object]:
     assert NODE, "Node.js es necesario para comprobar la paridad del analizador Lite."
     completed = subprocess.run(  # noqa: S603
         [NODE, str(RUNNER), str(ARTIFACT)],
-        input=json.dumps({"operation": "analyze", "raw": raw}),
+        input=json.dumps(payload),
         text=True,
         encoding="utf-8",
         capture_output=True,
         check=True,
     )
     return json.loads(completed.stdout)
+
+
+def run_lite(raw: str) -> dict[str, object]:
+    return run_node({"operation": "analyze", "raw": raw})
 
 
 FULL_HEADERS = "\n".join(
@@ -124,3 +128,80 @@ def test_lite_discards_cookie_values() -> None:
     assert response["ok"] is True
     assert response["result"]["cookies"]["count"] == 3
     assert not any(secret in serialized for secret in secrets)
+
+
+@pytest.mark.parametrize(
+    ("server", "fragment"),
+    (
+        ("nginx", 'add_header Content-Security-Policy "default-src'),
+        ("apache", "<IfModule mod_headers.c>"),
+        ("fastapi", '@app.middleware("http")'),
+        ("express", "app.use((req, res, next) =>"),
+    ),
+)
+def test_lite_generates_configuration_for_supported_servers(server: str, fragment: str) -> None:
+    response = run_node({"operation": "configuration", "server": server})
+
+    assert response["ok"] is True
+    assert fragment in response["result"]
+    assert "Cross-Origin-Embedder-Policy" in response["result"]
+
+
+def test_lite_reports_escape_html_and_never_export_cookie_values() -> None:
+    secret = "cookie-secret-never-export"
+    analyzed = run_lite(
+        "\n".join(
+            (
+                "Content-Security-Policy: default-src 'self'; report-uri <script>alert(1)</script>",
+                f"Set-Cookie: session={secret}; Secure; HttpOnly; SameSite=Lax",
+            )
+        )
+    )["result"]
+    report = {"source": "pasted", "analysis": analyzed}
+    exported = run_node({"operation": "export", "report": report})
+    html = run_node({"operation": "reportHTML", "report": exported["result"]})
+
+    assert exported["ok"] is True
+    assert exported["result"]["generator"] == "HeaderGuard Lite by abyssnx"
+    assert secret not in json.dumps(exported, ensure_ascii=False)
+    assert html["ok"] is True
+    assert "<script>alert(1)</script>" not in html["result"]
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html["result"]
+    assert secret not in html["result"]
+
+
+def test_lite_history_keeps_only_six_private_summaries() -> None:
+    analyses = [
+        {
+            "score": index,
+            "grade": "F",
+            "secure": 0,
+            "warnings": 0,
+            "missing": 9,
+            "cookies": {"cookies": [{"name": "must-not-be-stored"}]},
+            "results": [{"value": "must-not-be-stored"}],
+        }
+        for index in range(8)
+    ]
+    response = run_node({"operation": "history", "analyses": analyses})
+
+    assert response["ok"] is True
+    assert [item["score"] for item in response["result"]] == [7, 6, 5, 4, 3, 2]
+    assert set(response["result"][0]) == {
+        "date",
+        "score",
+        "grade",
+        "secure",
+        "warnings",
+        "missing",
+    }
+    assert "must-not-be-stored" not in json.dumps(response)
+
+
+@pytest.mark.parametrize("storage_mode", ("throw", "corrupt"))
+def test_lite_history_survives_unavailable_storage(storage_mode: str) -> None:
+    response = run_node(
+        {"operation": "history", "analyses": [], "storageMode": storage_mode}
+    )
+
+    assert response == {"ok": True, "result": []}
