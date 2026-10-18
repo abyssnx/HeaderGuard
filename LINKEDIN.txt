@@ -1,0 +1,35 @@
+🔐 NUEVO PROYECTO: HeaderGuard — HTTP Security Headers
+
+Hoy comparto HeaderGuard, una herramienta open source que he creado para analizar las cabeceras HTTP de seguridad de una web de forma visual, sencilla y educativa. 🛡️
+
+La idea nació después de mi anterior proyecto sobre Nmap: quería seguir aprendiendo ciberseguridad construyendo herramientas pequeñas, útiles y fáciles de entender.
+
+🚀 ¿Qué permite hacer HeaderGuard?
+
+🌐 Escanear una URL pública o analizar cabeceras pegadas manualmente.
+📊 Generar una puntuación de seguridad de 0 a 100.
+🔎 Detectar cabeceras ausentes y configuraciones débiles.
+💡 Mostrar explicaciones y recomendaciones prácticas.
+📈 Guardar un historial local y comparar la evolución de los análisis.
+📄 Exportar el informe en JSON o guardarlo como PDF.
+🧾 Descargar un informe HTML autónomo y fácil de compartir.
+🍪 Revisar atributos Secure, HttpOnly y SameSite sin exponer valores de cookies.
+🛠️ Generar configuraciones para Nginx, Apache, FastAPI y Express.
+📚 Consultar documentación oficial de MDN y OWASP desde cada resultado.
+📋 Copiar un resumen listo para compartir.
+🏷️ Generar un badge para el README de GitHub.
+🌓 Cambiar entre tema oscuro y claro.
+🔒 Proteger el escaneo remoto frente a SSRF, redes privadas y DNS rebinding.
+
+El proyecto está desarrollado con Python, FastAPI, HTML, CSS y JavaScript. Incluye 27 tests automatizados, pruebas reales con Chromium, GitHub Actions, Docker y documentación completa. ⚙️
+
+Una de las lecciones más importantes ha sido entender que algo aparentemente sencillo como consultar una URL desde un servidor necesita controles de seguridad serios. No basta con comprobar que la dirección empieza por “https://”.
+
+🔗 Código y documentación:
+https://github.com/abyssnx/HeaderGuard
+
+Me encantaría recibir opiniones, ideas o sugerencias para seguir mejorándolo. 🙌
+
+Creado por abyssnx 💠
+
+#CyberSecurity #WebSecurity #AppSec #Python #FastAPI #OpenSource #GitHub #Programming #LearningInPublic #InfoSec

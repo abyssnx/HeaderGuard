@@ -1,0 +1,34 @@
+name: Informe de error
+description: Comunica un comportamiento inesperado reproducible
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Gracias por ayudar a mejorar HeaderGuard. No uses este formulario para vulnerabilidades; consulta SECURITY.md.
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción
+      description: Explica qué ha ocurrido y qué esperabas.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: "1. Abre...\n2. Introduce...\n3. Observa..."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Entorno
+      placeholder: Windows 11, Python 3.12, Chrome 130
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Información adicional
+      description: Añade logs o capturas, eliminando antes cookies, tokens y datos sensibles.

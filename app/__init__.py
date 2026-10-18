@@ -1,0 +1,1 @@
+"""HeaderGuard application package."""

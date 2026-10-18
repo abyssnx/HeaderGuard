@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Tests
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev,ui]"
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
+      - name: Browser tests
+        env:
+          HEADERGUARD_SCREENSHOT_DIR: artifacts
+        run: pytest tests/test_ui.py
+      - name: Upload interface captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headerguard-interface
+          path: artifacts/
+          if-no-files-found: ignore

@@ -1,0 +1,24 @@
+name: Propuesta de mejora
+description: Sugiere una función o cambio para HeaderGuard
+title: "[Mejora]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o necesidad
+      description: ¿Qué necesidad resolvería esta mejora?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solución propuesta
+      description: Explica cómo debería funcionar desde el punto de vista del usuario.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      description: Opcional. Indica otras soluciones que hayas valorado.

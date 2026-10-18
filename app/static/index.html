@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Analiza cabeceras HTTP de seguridad, detecta configuraciones débiles y recibe recomendaciones claras.">
+    <meta name="author" content="abyssnx">
+    <meta name="theme-color" content="#070a17">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="HeaderGuard — HTTP Security Headers">
+    <meta property="og:description" content="Haz visible la seguridad de tu web con un análisis claro y educativo de sus cabeceras HTTP.">
+    <meta property="og:site_name" content="HeaderGuard by abyssnx">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070a17'/%3E%3Cpath d='M32 6 54 14v17c0 14-9 23-22 28C19 54 10 45 10 31V14Z' fill='none' stroke='%233be7ff' stroke-width='4'/%3E%3Cpath d='m22 32 7 7 14-16' fill='none' stroke='%238b5cf6' stroke-width='4'/%3E%3C/svg%3E">
+    <title>HeaderGuard — HTTP Security Headers</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-watermark" aria-hidden="true">ABYSSNX</div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="HeaderGuard, inicio">
+        <span class="brand-mark" aria-hidden="true"><span>HG</span></span>
+        <span class="brand-copy"><strong>HeaderGuard</strong><small>Security headers lab</small></span>
+      </a>
+      <div class="header-actions">
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema" title="Cambiar tema">☾</button>
+        <span class="lab-chip"><i></i> Abyssnx lab</span>
+        <a class="github-link" href="https://github.com/abyssnx/HeaderGuard" target="_blank" rel="noopener noreferrer">Ver en GitHub ↗</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow"><span></span> Auditoría defensiva y educativa <b>v1.2</b></div>
+          <h1>Haz visible<br><em>la seguridad</em><br>de tu web.</h1>
+          <p>Comprueba las cabeceras HTTP que protegen a tus usuarios. Obtén una puntuación clara, explicaciones y recomendaciones accionables.</p>
+          <div class="hero-tags" aria-label="Características principales">
+            <span>Sin registro</span><span>Privacidad primero</span><span>Open source</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="shield">
+            <span class="shield-code">HG</span>
+            <span class="shield-pulse"></span>
+          </div>
+          <span class="visual-label label-top">TLS / ACTIVE</span>
+          <span class="visual-label label-bottom">SSRF / SHIELDED</span>
+          <div class="scan-line"></div>
+        </div>
+      </section>
+
+      <section class="trust-strip" aria-label="Capacidades de HeaderGuard">
+        <div><span class="trust-number">09</span><span>Señales<br>analizadas</span></div>
+        <div><span class="trust-icon">◎</span><span>Conexión fijada<br>contra DNS rebinding</span></div>
+        <div><span class="trust-icon">⌁</span><span>Explicaciones<br>accionables</span></div>
+        <div class="trust-signature"><small>Crafted by</small><strong>abyssnx</strong></div>
+      </section>
+
+      <section class="scanner-card" aria-labelledby="scanner-title">
+        <div class="scanner-label"><span>01</span> Analizador HTTP <i>online</i></div>
+        <div class="tabs" role="tablist" aria-label="Método de análisis">
+          <button id="remote-tab" class="tab active" role="tab" aria-selected="true" aria-controls="remote-panel">Escanear URL</button>
+          <button id="paste-tab" class="tab" role="tab" aria-selected="false" aria-controls="paste-panel">Pegar cabeceras</button>
+        </div>
+
+        <h2 id="scanner-title" class="sr-only">Analizador de cabeceras</h2>
+        <form id="remote-panel" class="panel" role="tabpanel" aria-labelledby="remote-tab">
+          <label for="url">URL pública</label>
+          <div class="input-row">
+            <input id="url" name="url" type="url" inputmode="url" placeholder="https://ejemplo.com" value="https://example.com" required maxlength="2048" autocomplete="url">
+            <button class="primary-button" type="submit"><span>Analizar</span><span aria-hidden="true">→</span></button>
+          </div>
+          <p class="hint">Solo HTTP/HTTPS en puertos 80 y 443. Las redes privadas están bloqueadas.</p>
+        </form>
+
+        <form id="paste-panel" class="panel hidden" role="tabpanel" aria-labelledby="paste-tab">
+          <label for="headers">Cabeceras de respuesta</label>
+          <textarea id="headers" name="headers" rows="8" placeholder="HTTP/2 200&#10;content-security-policy: default-src 'self'&#10;x-content-type-options: nosniff" required maxlength="32768"></textarea>
+          <div class="paste-actions">
+            <p class="hint">Una cabecera por línea, en formato Nombre: valor.</p>
+            <div class="button-group">
+              <button id="sample-button" class="secondary-button" type="button">Cargar ejemplo</button>
+              <button class="primary-button" type="submit"><span>Analizar</span><span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </form>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <section id="results" class="results hidden" aria-live="polite">
+        <div class="score-card">
+          <div>
+            <p class="section-kicker">Resultado del análisis</p>
+            <h2 id="result-title">Informe de seguridad</h2>
+            <p id="result-meta" class="muted"></p>
+          </div>
+          <div id="score-ring" class="score-ring score-0" aria-label="Puntuación">
+            <strong id="score">0</strong><span>/100</span>
+            <small id="grade">F</small>
+          </div>
+        </div>
+        <div class="results-head">
+          <h3>Cabeceras evaluadas</h3>
+          <div class="result-badges"><span id="comparison" class="pill hidden"></span><span id="summary" class="pill"></span></div>
+        </div>
+        <div class="insight-grid" aria-label="Resumen de calidad">
+          <div><strong id="secure-count">0</strong><span>Correctas</span></div>
+          <div class="warning-stat"><strong id="warning-count">0</strong><span>Mejorables</span></div>
+          <div class="missing-stat"><strong id="missing-count">0</strong><span>Ausentes</span></div>
+          <div class="priority-card"><span>Prioridad principal</span><strong id="top-priority">—</strong></div>
+        </div>
+        <div id="header-list" class="header-list"></div>
+
+        <section id="cookie-results" class="cookie-panel hidden" aria-labelledby="cookie-title">
+          <div class="subsection-head">
+            <div><p class="section-kicker">Privacidad y sesión</p><h3 id="cookie-title">Cookies detectadas</h3></div>
+            <span id="cookie-summary" class="pill"></span>
+          </div>
+          <p class="muted">Solo se muestran nombres y atributos. Los valores de las cookies se eliminan del resultado.</p>
+          <div id="cookie-list" class="cookie-list"></div>
+        </section>
+
+        <section class="config-panel" aria-labelledby="config-title">
+          <div class="subsection-head">
+            <div><p class="section-kicker">Aplicar mejoras</p><h3 id="config-title">Generador de configuración</h3></div>
+            <label class="server-select">Servidor
+              <select id="server-type">
+                <option value="nginx">Nginx</option>
+                <option value="apache">Apache</option>
+                <option value="fastapi">FastAPI</option>
+                <option value="express">Express</option>
+              </select>
+            </label>
+          </div>
+          <p class="muted">Genera un punto de partida seguro. Revísalo en un entorno de pruebas antes de desplegarlo.</p>
+          <pre class="config-code"><code id="config-output"></code></pre>
+          <div class="button-group config-actions">
+            <button id="copy-config" class="secondary-button" type="button">⧉ Copiar configuración</button>
+            <button id="download-config" class="secondary-button" type="button">↓ Descargar archivo</button>
+          </div>
+        </section>
+
+        <div class="report-actions" aria-label="Acciones del informe">
+          <button id="download-json" class="secondary-button" type="button">↓ Descargar JSON</button>
+          <button id="download-html" class="secondary-button" type="button">⌘ Informe HTML</button>
+          <button id="print-report" class="secondary-button" type="button">▣ Guardar PDF</button>
+          <button id="copy-summary" class="secondary-button" type="button">⧉ Copiar resumen</button>
+          <button id="copy-badge" class="secondary-button" type="button">◇ Copiar badge</button>
+        </div>
+      </section>
+
+      <section id="history" class="history-section" aria-labelledby="history-title">
+        <div class="history-head">
+          <div><p class="section-kicker">Seguimiento local</p><h2 id="history-title">Últimos análisis</h2></div>
+          <button id="clear-history" class="text-button" type="button">Limpiar historial</button>
+        </div>
+        <p class="history-privacy">Se guarda únicamente la puntuación en este navegador. Nunca almacenamos cabeceras ni cookies.</p>
+        <div id="history-list" class="history-list"><p class="empty-history">Todavía no hay análisis guardados.</p></div>
+      </section>
+
+      <section class="explanation">
+        <p class="section-kicker">Por qué importa</p>
+        <h2>Una primera línea de defensa que viaja en cada respuesta.</h2>
+        <div class="feature-grid">
+          <article><span>01</span><h3>Prevención</h3><p>Reduce riesgos comunes como XSS, clickjacking y filtraciones de información.</p></article>
+          <article><span>02</span><h3>Visibilidad</h3><p>Convierte configuración técnica en un informe fácil de entender y compartir.</p></article>
+          <article><span>03</span><h3>Aprendizaje</h3><p>Cada hallazgo explica qué protege la cabecera y enlaza documentación oficial de MDN y OWASP.</p></article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>HeaderGuard · Proyecto educativo open source</span>
+      <span class="creator-mark">Creado por <strong>abyssnx</strong></span>
+      <span>No sustituye una auditoría profesional.</span>
+    </footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
