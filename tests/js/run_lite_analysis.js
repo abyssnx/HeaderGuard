@@ -10,6 +10,9 @@ if (!match) throw new Error("No se encontró el script de HeaderGuard Lite.");
 
 const stored = new Map();
 if (request.storageMode === "corrupt") stored.set("headerguard.lite.history.v1", "not-json");
+if (request.seedHistory) {
+  stored.set("headerguard.lite.history.v1", JSON.stringify(request.seedHistory));
+}
 const localStorage = {
   getItem(key) {
     if (request.storageMode === "throw") throw new Error("storage blocked");

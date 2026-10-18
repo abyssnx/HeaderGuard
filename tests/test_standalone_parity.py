@@ -205,3 +205,29 @@ def test_lite_history_survives_unavailable_storage(storage_mode: str) -> None:
     )
 
     assert response == {"ok": True, "result": []}
+
+
+def test_lite_history_sanitizes_old_or_manipulated_entries() -> None:
+    valid = [
+        {
+            "date": f"2026-10-{18 - index:02d}T10:00:00.000Z",
+            "score": 90 - index,
+            "grade": "A",
+            "secure": 9,
+            "warnings": 0,
+            "missing": 0,
+            "unexpected_private_data": "must-be-removed",
+        }
+        for index in range(8)
+    ]
+    seeded = [None, {"date": "invalid"}, *valid]
+    response = run_node(
+        {"operation": "history", "analyses": [], "seedHistory": seeded}
+    )
+
+    assert response["ok"] is True
+    assert len(response["result"]) == 6
+    assert [item["score"] for item in response["result"]] == [90, 89, 88, 87, 86, 85]
+    expected_keys = {"date", "score", "grade", "secure", "warnings", "missing"}
+    assert all(set(item) == expected_keys for item in response["result"])
+    assert "must-be-removed" not in json.dumps(response)

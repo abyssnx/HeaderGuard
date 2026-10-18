@@ -248,7 +248,31 @@
   function getHistory() {
     return safeStorage(() => {
       const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      const validGrades = new Set(["A", "B", "C", "D", "F"]);
+      return parsed
+        .filter((item) => (
+          item
+          && typeof item === "object"
+          && typeof item.date === "string"
+          && Number.isFinite(Date.parse(item.date))
+          && Number.isInteger(item.score)
+          && item.score >= 0
+          && item.score <= 100
+          && validGrades.has(item.grade)
+          && [item.secure, item.warnings, item.missing].every(
+            (value) => Number.isInteger(value) && value >= 0 && value <= RULES.length,
+          )
+        ))
+        .slice(0, 6)
+        .map((item) => ({
+          date: item.date,
+          score: item.score,
+          grade: item.grade,
+          secure: item.secure,
+          warnings: item.warnings,
+          missing: item.missing,
+        }));
     }, []);
   }
 
