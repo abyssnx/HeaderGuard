@@ -1,127 +1,116 @@
-# Guía para publicar HeaderGuard en GitHub
+# Mantenimiento de HeaderGuard en GitHub
 
-Esta guía explica cómo presentar, mantener y publicar nuevas versiones de HeaderGuard en GitHub.
+El repositorio oficial es [abyssnx/HeaderGuard](https://github.com/abyssnx/HeaderGuard). Esta guía resume cómo revisar cambios, publicar versiones y mantener una presentación profesional.
 
-## 1. Crear el repositorio
+## Información del repositorio
 
-En GitHub, crea un repositorio público llamado `HeaderGuard` y no marques las opciones para generar README, licencia o `.gitignore`: el proyecto ya incluye esos archivos.
+Descripción recomendada:
 
-Descripción sugerida para el campo **About**:
-
-> Analizador visual de cabeceras HTTP de seguridad con FastAPI, puntuación explicada y protección SSRF.
+> Analizador visual de cabeceras HTTP de seguridad con edición HTML autónoma, FastAPI y protección SSRF.
 
 Temas recomendados:
 
-```text
+~~~text
 cybersecurity http-security security-headers fastapi python ssrf web-security appsec
-```
+~~~
 
-## 2. Enlaces configurados
+## Antes de subir cambios
 
-Los botones, avisos de seguridad y borradores sociales ya apuntan a `https://github.com/abyssnx/HeaderGuard`. En `SECURITY.md` puedes añadir otro método privado de contacto si deseas recibir informes fuera de GitHub.
+Desde la raíz del proyecto:
 
-## 3. Subirlo manualmente desde la web
+~~~bash
+python scripts/build_standalone.py --check
+ruff check .
+pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+~~~
 
-Esta es la opción más sencilla si no quieres utilizar Git:
+Si has modificado la interfaz y tienes Playwright instalado, ejecuta también las pruebas de navegador:
 
-1. Descomprime `HeaderGuard.zip`.
-2. Entra en el repositorio vacío de GitHub.
-3. Pulsa **Add file → Upload files**.
-4. Arrastra **el contenido interior** de la carpeta `HeaderGuard`, no la carpeta completa.
-5. Comprueba que `README.md`, `app`, `tests` y `.github` aparecen en la raíz.
-6. Escribe `feat: publica HeaderGuard v1.3.0` como mensaje y confirma la subida.
+~~~bash
+python -m playwright install chromium
+pytest tests/test_ui.py tests/test_lite_ui.py
+~~~
 
-GitHub puede ocultar la carpeta `.github` en algunos selectores de Windows porque empieza por punto. Si no se carga al arrastrar, usa los comandos de la siguiente sección o súbela por separado.
+Comprueba además:
 
-## 4. Subirlo desde PowerShell
+- `git status` solo muestra archivos relacionados con el cambio.
+- README, guías y ejemplos coinciden con el comportamiento actual.
+- No hay secretos, entornos virtuales, caches ni informes locales.
+- `CHANGELOG.md` recoge los cambios visibles para usuarios.
 
-Ejecuta estos comandos dentro de la carpeta `I:\Codex\HeaderGuard`:
+## Subir una mejora
 
-```powershell
-git init
-git add .
-git commit -m "feat: publica HeaderGuard v1.3.0"
-git branch -M main
-git remote add origin https://github.com/abyssnx/HeaderGuard.git
-git push -u origin main
-```
+~~~bash
+git add README.md docs/ CHANGELOG.md
+git commit -m "docs: mejora las guías de uso y API"
+git push origin main
+~~~
 
-Si Git te pide identificarte antes del commit:
+Para cambios de código, utiliza una rama y un pull request cuando quieras conservar una revisión separada.
 
-```powershell
-git config user.name "TU_NOMBRE"
-git config user.email "TU_EMAIL_PUBLICO_O_NOREPLY"
-```
+## Publicar una versión
 
-## 5. Comprobar la publicación
+1. Actualiza la versión en `pyproject.toml`, `app/main.py`, `app/scanner.py`, `app/static/index.html` y la etiqueta OCI del `Dockerfile`.
+2. Añade una sección fechada a `CHANGELOG.md`.
+3. Regenera `HeaderGuard-Lite.html` si han cambiado sus fuentes o reglas.
+4. Ejecuta toda la suite.
+5. Crea y sube el commit.
+6. Espera a que GitHub Actions finalice correctamente.
+7. Crea una etiqueta, por ejemplo:
 
-Después del primer `push`:
+~~~bash
+git tag -a v1.4.0 -m "HeaderGuard v1.4.0"
+git push origin v1.4.0
+~~~
 
-- Abre la pestaña **Actions** y comprueba que el flujo `CI` termina en verde.
-- Revisa que el README muestre correctamente tablas, diagrama y enlaces.
-- Comprueba que la licencia aparezca como MIT en la portada del repositorio.
-- Activa **Issues** y **Discussions** si quieres recibir ideas de la comunidad.
-- En **Settings → General**, permite solamente `Squash merging` si prefieres un historial limpio.
-- En **Settings → Code security**, activa las opciones gratuitas disponibles para repositorios públicos.
+8. En GitHub, abre **Releases → Draft a new release**.
+9. Selecciona la etiqueta, resume los cambios y adjunta el ZIP si deseas ofrecer una descarga directa.
 
-## 6. Crear la primera versión
+## Preparar el ZIP
 
-Cuando la acción de CI haya terminado correctamente:
+El ZIP debe contener directamente los archivos del proyecto, no una carpeta duplicada. Excluye:
 
-1. Abre **Releases → Draft a new release**.
-2. Crea la etiqueta `v1.3.0`.
-3. Usa como título `HeaderGuard v1.3.0`.
-4. Copia las novedades de `CHANGELOG.md`.
-5. Adjunta `HeaderGuard.zip` si quieres ofrecer una descarga directa.
+- `.git/`
+- `.venv/`
+- Caches de Python, Ruff y pytest.
+- Cobertura local.
+- Borradores de publicaciones o imágenes externas al repositorio.
 
-## 7. Cómo explicar el proyecto
+Después de crearlo, descomprímelo en una carpeta temporal y comprueba que Lite abre con doble clic y que README aparece en la raíz.
 
-### Resumen corto
+## Comprobaciones en GitHub
 
-HeaderGuard es una herramienta educativa que revisa nueve cabeceras HTTP de seguridad, detecta configuraciones débiles y produce una puntuación acompañada de recomendaciones. La edición Lite funciona con doble clic y sin instalación; la edición completa puede analizar una URL pública mediante FastAPI con protección SSRF.
+Después de cada publicación:
 
-### Problema que resuelve
+- La acción **CI** termina en verde.
+- El banner y la captura del README cargan correctamente.
+- Los enlaces internos no devuelven 404.
+- GitHub detecta la licencia MIT.
+- Las plantillas de incidencias y pull requests están disponibles.
+- Dependabot puede revisar las acciones configuradas.
+- La pestaña **Security** permite crear avisos privados.
 
-Las cabeceras de seguridad suelen ser difíciles de interpretar para quien empieza en ciberseguridad. HeaderGuard convierte una respuesta HTTP en un informe visual y explica qué falta, por qué importa y cómo mejorarlo.
+## Protección recomendada de main
 
-### Decisiones técnicas destacables
+En **Settings → Branches** puedes exigir:
 
-- El navegador nunca contacta directamente con el objetivo: lo hace una API controlada.
-- El escáner rechaza redes privadas, loopback, credenciales y puertos no permitidos.
-- Cada redirección se valida y la conexión queda fijada a una IP ya comprobada para reducir el riesgo de DNS rebinding.
-- El historial se guarda localmente en el navegador y no almacena cabeceras ni cookies.
-- El frontend no necesita framework ni compilación, reduciendo dependencias y superficie de ataque.
+- Que CI finalice correctamente.
+- Que la rama esté actualizada antes de integrar.
+- Que no se fuerce el historial.
+- Revisión por pull request cuando colaboren más personas.
 
-### Arquitectura
+Para un proyecto personal también es válido trabajar directamente en `main`, siempre que las comprobaciones pasen antes y después del push.
 
-```mermaid
-flowchart LR
-    U[Usuario] --> UI[Frontend HTML, CSS y JS]
-    UI -->|URL pública| API[API FastAPI]
-    UI -->|Cabeceras pegadas| API
-    API --> V[Validación SSRF y DNS]
-    V --> W[Sitio público]
-    W --> A[Analizador de cabeceras]
-    API --> A
-    A --> R[Puntuación y recomendaciones]
-    R --> UI
-```
+## Presentar el proyecto
 
-## 8. Demostración recomendada
+Una demostración corta puede seguir este orden:
 
-Para enseñarlo en una entrevista, vídeo o publicación:
+1. Abrir `HeaderGuard-Lite.html` con doble clic.
+2. Cargar el ejemplo y explicar la puntuación.
+3. Mostrar una prioridad y su recomendación.
+4. Arrancar la edición completa.
+5. Escanear una URL pública autorizada.
+6. Enseñar la documentación en `/api/docs`.
+7. Explicar brevemente la protección SSRF y las pruebas automatizadas.
 
-1. Abre `HeaderGuard-Lite.html` con doble clic para demostrar que no requiere instalación.
-2. Pulsa **Cargar ejemplo**.
-3. Ejecuta el análisis y enseña la puntuación y las prioridades.
-4. Cambia una política segura por otra débil para mostrar las advertencias.
-5. Exporta el JSON o copia el badge para demostrar que el informe se puede reutilizar.
-6. Arranca la edición completa y explica la protección SSRF usando el diagrama anterior.
-
-## 9. Qué no debes prometer
-
-HeaderGuard es una ayuda educativa y no sustituye una auditoría profesional. Una cabecera presente puede seguir siendo insuficiente para una aplicación concreta, y una puntuación alta no garantiza que un sitio sea seguro.
-
----
-
-Creado por **abyssnx**.
+Consulta [README.md](README.md) para la presentación principal y [docs/GUIA_USO.md](docs/GUIA_USO.md) para instrucciones completas.

@@ -23,7 +23,9 @@ def test_release_version_is_consistent() -> None:
 
 def test_public_repository_contains_only_product_documentation() -> None:
     assert {path.name for path in (ROOT / "docs").iterdir()} == {
+        "API.md",
         "ARQUITECTURA.md",
+        "GUIA_USO.md",
         "assets",
     }
     assert not list(ROOT.glob("*.txt"))

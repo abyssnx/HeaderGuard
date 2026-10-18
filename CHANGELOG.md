@@ -2,6 +2,15 @@
 
 Todos los cambios relevantes de HeaderGuard se documentan aquí. El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto utiliza versionado semántico.
 
+## [Sin publicar]
+
+### Documentación
+
+- README reorganizado con inicio rápido y un índice claro de documentación.
+- Nuevas guías de uso y API con ejemplos para terminal y PowerShell.
+- Arquitectura ampliada con flujo de datos, límites de confianza y defensa SSRF.
+- Guías de contribución, seguridad y mantenimiento de GitHub actualizadas.
+
 ## [1.3.0] - 2026-10-18
 
 ### Añadido
