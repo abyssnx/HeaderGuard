@@ -10,8 +10,6 @@
   <style>{{STYLE}}</style>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
   <header class="topbar">
     <a class="logo" href="#main" aria-label="Ir al inicio de HeaderGuard Lite">
       <span class="logo-mark" aria-hidden="true">HG</span>
@@ -25,14 +23,19 @@
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span></span> Edición Lite · análisis local</p>
-        <h1 id="hero-title">Convierte cabeceras HTTP en <em>acciones claras.</em></h1>
+        <p class="eyebrow"><span>Edición Lite · análisis local</span><b>LOCAL REVIEW</b></p>
+        <h1 id="hero-title">Revisa cabeceras HTTP. <em>Sin enviar datos.</em></h1>
         <p class="hero-lead">Pega la respuesta de un servidor y descubre qué protecciones existen, cuáles son débiles y cómo mejorarlas. Sin cuentas, sin servidor y sin enviar datos.</p>
         <div class="trust-row" aria-label="Características de privacidad"><span>✓ 100 % local</span><span>✓ Valores de cookies ocultos</span><span>✓ Código abierto</span></div>
       </div>
-      <aside class="privacy-card">
-        <div class="privacy-icon" aria-hidden="true">⌁</div>
-        <div><strong>Todo ocurre en este navegador</strong><p>El texto pegado permanece en memoria y nunca sale de tu equipo.</p></div>
+      <aside class="hero-dossier" aria-label="Privacidad de la edición Lite">
+        <div class="dossier-head"><span>Sesión local</span><b>PRIVADA</b></div>
+        <ol>
+          <li><span>01</span><div><strong>Todo ocurre en este navegador</strong><small>Procesamiento en memoria; ningún dato sale del equipo</small></div></li>
+          <li><span>02</span><div><strong>Sin cuenta ni instalación</strong><small>Abre el archivo y empieza</small></div></li>
+          <li><span>03</span><div><strong>Valores sensibles ocultos</strong><small>Cookies redactadas en el informe</small></div></li>
+        </ol>
+        <div class="dossier-signature"><span>HEADERGUARD / LOCAL TOOL</span><strong>abyssnx</strong></div>
       </aside>
     </section>
     <section class="workspace" aria-label="Analizador de cabeceras">

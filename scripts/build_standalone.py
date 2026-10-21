@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_PATH = ROOT / "standalone" / "lite.template.html"
 CSS_PATH = ROOT / "standalone" / "lite.css"
+THEME_CSS_PATH = ROOT / "standalone" / "lite.obsidian.css"
 JS_PATH = ROOT / "standalone" / "lite.js"
 OUTPUT_PATH = ROOT / "HeaderGuard-Lite.html"
 
@@ -41,7 +42,9 @@ def build_document(
     js_path: Path = JS_PATH,
 ) -> str:
     template = template_path.read_text(encoding="utf-8")
-    style = css_path.read_text(encoding="utf-8")
+    style = "\n".join(
+        (css_path.read_text(encoding="utf-8"), THEME_CSS_PATH.read_text(encoding="utf-8"))
+    )
     rules_json = json.dumps(
         serialize_rules(), ensure_ascii=False, separators=(",", ":"), sort_keys=True
     ).replace("<", "\\u003c")
