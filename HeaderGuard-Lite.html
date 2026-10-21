@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EuX43ozCxP/wk2cTXm3SJXbnCzcIZEybBdowz7+gw4I='; style-src 'sha256-+rxeZpYjGY+8pjeAoqjRzig0bc0ai0hIvqe0r7wJhdc='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EuX43ozCxP/wk2cTXm3SJXbnCzcIZEybBdowz7+gw4I='; style-src 'sha256-bkBLNfpp6aBtUyRwMvFiSQ6gzGz9NwhRVM1DjkojMPY='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Analiza cabeceras HTTP de seguridad localmente, sin instalar nada ni enviar datos.">
   <title>HeaderGuard Lite · analizador local de cabeceras HTTP</title>
@@ -306,11 +306,53 @@ footer p { margin: 0; } footer span { margin: 0 6px; color: var(--cyan); }
   .upgrade-label { border-radius: 9px; color: #c4b5fd; }
   footer span { color: #c4b5fd; }
 }
+
+/* HeaderGuard Lite — Obsidian Audit */
+@media screen {
+  :root { color-scheme: dark; --obsidian: #09090b; --audit-purple: #7657d6; --radius-panel: 6px; --bg: var(--obsidian); --panel: #121215; --panel-solid: #121215; --text: #f4f1f7; --muted: #96909e; --line: #2a2730; --cyan: #9b84e7; --blue: var(--audit-purple); --violet: #b6a7e8; --shadow: none; }
+  :root[data-theme="light"] { color-scheme: dark; --bg: #0c0c0f; --panel: #19181c; --panel-solid: #19181c; --text: #f6f3f8; --muted: #aaa4af; --line: #343039; --cyan: #a893ea; --blue: #8469dc; --violet: #c1b4e8; }
+  body { background: var(--bg); }
+  .topbar { margin-top: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+  .logo-mark { border: 1px solid #4a3b70; border-radius: 3px; background: #15121c; color: #c8bbed; }
+  .local-pill, .icon-button { border-radius: 3px; background: transparent; }
+  .hero { grid-template-columns: minmax(0,1.55fr) minmax(300px,.75fr); gap: clamp(48px,8vw,100px); padding: 94px 0 76px; align-items: end; }
+  .eyebrow { display: flex; gap: 14px; color: #b6a7e8; font: 600 11px/1 var(--mono); letter-spacing: .14em; }
+  .eyebrow span { width: auto; height: auto; background: none; box-shadow: none; }
+  .eyebrow b { color: #706b77; font-size: 10px; }
+  h1 { max-width: 760px; margin: 24px 0; color: var(--text); font-size: clamp(48px,6vw,74px); font-weight: 620; line-height: 1; letter-spacing: -.055em; }
+  h1 em { color: #a18adb; background: none; font-style: normal; -webkit-text-fill-color: currentColor; }
+  .hero-lead { color: #aaa4af; line-height: 1.7; }
+  .trust-row { gap: 0; }
+  .trust-row span { padding: 0 14px; border-right: 1px solid var(--line); color: #8d8793; }
+  .trust-row span:first-child { padding-left: 0; }
+  .trust-row span:last-child { border-right: 0; }
+  .hero-dossier { border: 1px solid var(--line); border-left: 3px solid var(--audit-purple); border-radius: var(--radius-panel); background: #111114; }
+  .dossier-head, .dossier-signature { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; }
+  .dossier-head { border-bottom: 1px solid var(--line); color: #aaa4af; font: 600 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .dossier-head b { color: #68d69e; font-size: 9px; }
+  .hero-dossier ol { margin: 0; padding: 0; list-style: none; }
+  .hero-dossier li { display: grid; grid-template-columns: 32px 1fr; gap: 10px; padding: 18px; border-bottom: 1px solid var(--line); }
+  .hero-dossier li > span { color: #7657d6; font: 600 10px/1.4 var(--mono); }
+  .hero-dossier strong { display: block; color: #ded9e3; font-size: 13px; font-weight: 600; }
+  .hero-dossier small { display: block; margin-top: 5px; color: #817b86; font-size: 11px; line-height: 1.45; }
+  .dossier-signature { color: #615d66; font: 500 9px/1 var(--mono); letter-spacing: .08em; }
+  .dossier-signature strong { color: #a18adb; font-size: 11px; }
+  .panel { border-radius: var(--radius-panel); background: var(--panel); box-shadow: none; backdrop-filter: none; }
+  .step { border-radius: 2px; background: #1e192a; color: #b6a7e8; }
+  textarea { border-color: var(--line); border-radius: 3px; background: #0c0c0f; }
+  .button { border-radius: 3px; }
+  .button.primary { border-color: #856bd9; background: var(--audit-purple); box-shadow: none; }
+  .button.primary:hover { background: #856bd9; box-shadow: none; }
+  .stat, .priority-item, .header-item, .cookie-item, .history-item, .export-button { border-radius: 4px; }
+  pre, :root[data-theme="light"] pre { border-radius: 3px; background: #09090b; }
+  .upgrade-card { border-radius: var(--radius-panel); background: #111114; }
+  .upgrade-label { border-radius: 2px; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 42px; padding: 66px 0 56px; } .hero-dossier { max-width: 560px; } }
+  @media (max-width: 620px) { h1 { font-size: clamp(40px,13vw,56px); } .trust-row span { padding: 0 9px; font-size: 10px; } }
+}
 </style>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
   <header class="topbar">
     <a class="logo" href="#main" aria-label="Ir al inicio de HeaderGuard Lite">
       <span class="logo-mark" aria-hidden="true">HG</span>
@@ -324,14 +366,19 @@ footer p { margin: 0; } footer span { margin: 0 6px; color: var(--cyan); }
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span></span> Edición Lite · análisis local</p>
-        <h1 id="hero-title">Convierte cabeceras HTTP en <em>acciones claras.</em></h1>
+        <p class="eyebrow"><span>Edición Lite · análisis local</span><b>LOCAL REVIEW</b></p>
+        <h1 id="hero-title">Revisa cabeceras HTTP. <em>Sin enviar datos.</em></h1>
         <p class="hero-lead">Pega la respuesta de un servidor y descubre qué protecciones existen, cuáles son débiles y cómo mejorarlas. Sin cuentas, sin servidor y sin enviar datos.</p>
         <div class="trust-row" aria-label="Características de privacidad"><span>✓ 100 % local</span><span>✓ Valores de cookies ocultos</span><span>✓ Código abierto</span></div>
       </div>
-      <aside class="privacy-card">
-        <div class="privacy-icon" aria-hidden="true">⌁</div>
-        <div><strong>Todo ocurre en este navegador</strong><p>El texto pegado permanece en memoria y nunca sale de tu equipo.</p></div>
+      <aside class="hero-dossier" aria-label="Privacidad de la edición Lite">
+        <div class="dossier-head"><span>Sesión local</span><b>PRIVADA</b></div>
+        <ol>
+          <li><span>01</span><div><strong>Todo ocurre en este navegador</strong><small>Procesamiento en memoria; ningún dato sale del equipo</small></div></li>
+          <li><span>02</span><div><strong>Sin cuenta ni instalación</strong><small>Abre el archivo y empieza</small></div></li>
+          <li><span>03</span><div><strong>Valores sensibles ocultos</strong><small>Cookies redactadas en el informe</small></div></li>
+        </ol>
+        <div class="dossier-signature"><span>HEADERGUARD / LOCAL TOOL</span><strong>abyssnx</strong></div>
       </aside>
     </section>
     <section class="workspace" aria-label="Analizador de cabeceras">

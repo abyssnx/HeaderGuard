@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Analiza cabeceras HTTP de seguridad, detecta configuraciones débiles y recibe recomendaciones claras.">
     <meta name="author" content="abyssnx">
-    <meta name="theme-color" content="#8b5cf6">
+    <meta name="theme-color" content="#09090b">
     <meta property="og:type" content="website">
     <meta property="og:title" content="HeaderGuard — HTTP Security Headers">
     <meta property="og:description" content="Haz visible la seguridad de tu web con un análisis claro y educativo de sus cabeceras HTTP.">
@@ -14,10 +14,10 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050507'/%3E%3Cpath d='M32 6 54 14v17c0 14-9 23-22 28C19 54 10 45 10 31V14Z' fill='none' stroke='%238b5cf6' stroke-width='4'/%3E%3Cpath d='m22 32 7 7 14-16' fill='none' stroke='%23ddd6fe' stroke-width='4'/%3E%3C/svg%3E">
     <title>HeaderGuard — HTTP Security Headers</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/obsidian.css">
     <script src="/static/app.js" defer></script>
   </head>
   <body>
-    <div class="page-watermark" aria-hidden="true">ABYSSNX</div>
     <header class="site-header">
       <a class="brand" href="/" aria-label="HeaderGuard, inicio">
         <span class="brand-mark" aria-hidden="true"><span>HG</span></span>
@@ -33,24 +33,22 @@
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <div class="eyebrow"><span></span> Auditoría defensiva y educativa <b>v1.3</b></div>
-          <h1>Haz visible<br><em>la seguridad</em><br>de tu web.</h1>
-          <p>Comprueba las cabeceras HTTP que protegen a tus usuarios. Obtén una puntuación clara, explicaciones y recomendaciones accionables.</p>
+          <div class="eyebrow"><span>HTTP SECURITY REVIEW</span><b>v1.3</b></div>
+          <h1>Audita las cabeceras HTTP.<br><em>Corrige lo que falta.</em></h1>
+          <p>Un informe técnico que convierte cabeceras complejas en decisiones claras: puntuación, contexto y una ruta concreta para reforzar tu web.</p>
           <div class="hero-tags" aria-label="Características principales">
             <span>Sin registro</span><span>Privacidad primero</span><span>Open source</span>
           </div>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="orbit orbit-one"></div>
-          <div class="orbit orbit-two"></div>
-          <div class="shield">
-            <span class="shield-code">HG</span>
-            <span class="shield-pulse"></span>
-          </div>
-          <span class="visual-label label-top">TLS / ACTIVE</span>
-          <span class="visual-label label-bottom">SSRF / SHIELDED</span>
-          <div class="scan-line"></div>
-        </div>
+        <aside class="hero-dossier" aria-label="Cobertura del análisis">
+          <div class="dossier-head"><span>Informe de cobertura</span><b>LISTO</b></div>
+          <ol>
+            <li><span>01</span><div><strong>9 controles esenciales</strong><small>Cabeceras, políticas y cookies</small></div></li>
+            <li><span>02</span><div><strong>Escaneo remoto protegido</strong><small>Defensas SSRF y DNS rebinding</small></div></li>
+            <li><span>03</span><div><strong>Recomendaciones aplicables</strong><small>Nginx, Apache, FastAPI y Express</small></div></li>
+          </ol>
+          <div class="dossier-signature"><span>HEADERGUARD / AUDIT TOOL</span><strong>abyssnx</strong></div>
+        </aside>
       </section>
 
       <section class="trust-strip" aria-label="Capacidades de HeaderGuard">
