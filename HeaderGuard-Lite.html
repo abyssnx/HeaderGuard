@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EuX43ozCxP/wk2cTXm3SJXbnCzcIZEybBdowz7+gw4I='; style-src 'sha256-YF181ueBalt8cDmtE4bUOa/YyFeSnmjXgR6XwlmAb00='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EuX43ozCxP/wk2cTXm3SJXbnCzcIZEybBdowz7+gw4I='; style-src 'sha256-+rxeZpYjGY+8pjeAoqjRzig0bc0ai0hIvqe0r7wJhdc='; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark light">
   <meta name="description" content="Analiza cabeceras HTTP de seguridad localmente, sin instalar nada ni enviar datos.">
   <title>HeaderGuard Lite · analizador local de cabeceras HTTP</title>
@@ -189,6 +189,123 @@ footer p { margin: 0; } footer span { margin: 0 6px; color: var(--cyan); }
 @media (max-width: 420px) { .form-actions,.export-grid,.history-list { grid-template-columns: 1fr; } .score-card { align-items: flex-start; flex-direction: column; } .stat span { letter-spacing: 0; text-transform: none; } .stat small { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 @media print { :root { color-scheme: light; --bg:#fff; --panel:#fff; --panel-solid:#fff; --text:#101828; --muted:#475467; --line:#d0d5dd; } .topbar,.hero,.input-card,.upgrade-card,footer { display:none; } body { background:#fff; } main { width:100%; } .results { padding:0; } .panel,.stat { box-shadow:none; break-inside:avoid; } }
+
+/* Black Purple — professional security identity */
+@media screen {
+  :root {
+    color-scheme: dark;
+    --security-black: #050507;
+    --security-purple: #8b5cf6;
+    --bg: #08080b;
+    --panel: rgba(17, 17, 22, 0.9);
+    --panel-solid: #111116;
+    --text: #f7f5fb;
+    --muted: #9c98a8;
+    --line: rgba(196, 181, 253, 0.14);
+    --cyan: var(--security-purple);
+    --blue: #7c3aed;
+    --violet: #a78bfa;
+    --shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+  }
+  :root[data-theme="light"] {
+    color-scheme: dark;
+    --bg: #111116;
+    --panel: rgba(24, 24, 30, 0.92);
+    --panel-solid: #18181e;
+    --text: #faf9fc;
+    --muted: #aaa6b4;
+    --line: rgba(221, 214, 254, 0.16);
+    --cyan: #a78bfa;
+    --blue: #8b5cf6;
+    --violet: #c4b5fd;
+    --green: #5ee6ad;
+    --amber: #ffc56b;
+    --red: #ff718d;
+    --shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
+  }
+  body {
+    background:
+      linear-gradient(rgba(167,139,250,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(167,139,250,.025) 1px, transparent 1px),
+      radial-gradient(circle at 84% 4%, rgba(124,58,237,.15), transparent 30rem),
+      var(--bg);
+    background-size: 64px 64px, 64px 64px, auto, auto;
+  }
+  :focus-visible { outline-color: #a78bfa; }
+  .ambient { opacity: .11; }
+  .ambient-one { background: #6d28d9; }
+  .ambient-two { background: #8b5cf6; }
+  .topbar {
+    margin-top: 14px;
+    border-radius: 14px;
+    background: rgba(12,12,16,.86);
+    box-shadow: 0 14px 38px rgba(0,0,0,.2);
+  }
+  .logo-mark {
+    border-color: rgba(167,139,250,.55);
+    border-radius: 10px;
+    background: linear-gradient(145deg,rgba(139,92,246,.26),rgba(91,33,182,.18));
+    color: #ddd6fe;
+  }
+  .icon-button { border-radius: 10px; background: rgba(22,22,28,.9); }
+  .theme-icon { color: #c4b5fd; }
+  .hero { padding-top: 88px; }
+  h1 {
+    max-width: 800px;
+    font-size: clamp(42px,6vw,72px);
+    font-weight: 760;
+    letter-spacing: -.065em;
+  }
+  h1 em {
+    background: linear-gradient(90deg,#f4f0ff,#c4b5fd 55%,#8b5cf6);
+    background-clip: text;
+  }
+  .eyebrow, .upgrade-kicker { color: #a78bfa; }
+  .eyebrow span { background: #8b5cf6; box-shadow: none; }
+  .privacy-card {
+    border-color: rgba(139,92,246,.26);
+    border-radius: 16px;
+    background: linear-gradient(135deg,rgba(139,92,246,.09),var(--panel));
+  }
+  .privacy-icon { border-radius: 10px; background: rgba(139,92,246,.13); color: #c4b5fd; }
+  .panel { border-radius: 18px; backdrop-filter: blur(18px); }
+  .step { border-radius: 7px; background: rgba(139,92,246,.14); color: #c4b5fd; }
+  textarea {
+    border-color: #2b2833;
+    border-radius: 12px;
+    background: rgba(8,8,11,.84);
+    caret-color: #a78bfa;
+  }
+  textarea:focus { border-color: #8b5cf6; box-shadow: 0 0 0 4px rgba(139,92,246,.1); }
+  .button { border-radius: 10px; }
+  .button.primary {
+    border-color: #9f7aea;
+    background: linear-gradient(110deg,#7c3aed,#8b5cf6 64%,#a78bfa);
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(76,29,149,.24);
+  }
+  .score-ring { background: conic-gradient(#8b5cf6 var(--score-angle),var(--line) 0); }
+  .score-copy h3 span, .reference-link, .history-score { color: #b9a7f8; }
+  .stat { border-radius: 15px; }
+  .priority-item, .header-item, .cookie-item, .history-item {
+    border-radius: 12px;
+    background: rgba(8,8,11,.5);
+  }
+  select { border-radius: 9px; }
+  pre,
+  :root[data-theme="light"] pre { border-radius: 12px; background: #08080b; color: #d8ccff; }
+  .export-button { border-radius: 11px; background: rgba(8,8,11,.48); }
+  .export-button:hover { border-color: rgba(139,92,246,.48); }
+  .export-button strong { color: #c4b5fd; }
+  .toast { border-color: rgba(139,92,246,.3); border-radius: 10px; }
+  .upgrade-card {
+    border-color: rgba(139,92,246,.28);
+    border-radius: 18px;
+    background: linear-gradient(120deg,rgba(139,92,246,.1),rgba(17,17,22,.72));
+  }
+  .upgrade-label { border-radius: 9px; color: #c4b5fd; }
+  footer span { color: #c4b5fd; }
+}
 </style>
 </head>
 <body>
